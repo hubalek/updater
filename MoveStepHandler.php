@@ -40,9 +40,17 @@ class MoveStepHandler
         }
 
         // Create destination directory if it doesn't exist
-        $toDir = is_dir($toPath) ? $toPath : dirname($toPath);
-        if (!is_dir($toDir)) {
-            mkdir($toDir, 0777, true);
+        // If toPath ends with / or \, treat it as directory
+        if (str_ends_with($toPath, DIRECTORY_SEPARATOR) || str_ends_with($toPath, '/') || str_ends_with($toPath, '\\')) {
+            $toDir = rtrim($toPath, DIRECTORY_SEPARATOR . '/\\');
+            if (!is_dir($toDir)) {
+                mkdir($toDir, 0777, true);
+            }
+        } else {
+            $toDir = is_dir($toPath) ? $toPath : dirname($toPath);
+            if (!is_dir($toDir)) {
+                mkdir($toDir, 0777, true);
+            }
         }
 
         // If destination is a directory, move into it
