@@ -1,62 +1,33 @@
 <?php
+ini_set('memory_limit', '2048M');
 
-class Updater
-{
-    private bool $debug = false;
+require_once __DIR__ . '/ConfigLoader.php';
+require_once __DIR__ . '/GitHubParser.php';
+require_once __DIR__ . '/FileManager.php';
+require_once __DIR__ . '/JunctionManager.php';
+require_once __DIR__ . '/HttpClient.php';
+require_once __DIR__ . '/DirectoryScanner.php';
+require_once __DIR__ . '/UpdateProcessor.php';
+require_once __DIR__ . '/UpdateOrchestrator.php';
 
-    private DirectoryScanner $directoryScanner;
-    private ConfigLoader $configLoader;
-    private GitHubParser $githubParser;
-    private FileManager $fileManager;
-    private JunctionManager $junctionManager;
-    private HttpClient $httpClient;
-    private UpdateProcessor $updateProcessor;
-
-    public function __construct(string $root, bool $debug = false)
-    {
-        $this->debug = $debug;
-
-        // Initialize components
-        $this->directoryScanner = new DirectoryScanner($root);
-        $this->configLoader = new ConfigLoader();
-        $this->githubParser = new GitHubParser();
-        $this->fileManager = new FileManager();
-        $this->junctionManager = new JunctionManager();
-        $this->httpClient = new HttpClient();
-
-        // Setup debug callbacks
-        $debugCallback = fn(string $msg) => $this->dbg($msg);
-        $this->githubParser->setDebugCallback($debugCallback);
-        $this->fileManager->setDebugCallback($debugCallback);
-        $this->junctionManager->setDebugCallback($debugCallback);
-        $this->httpClient->setDebugCallback($debugCallback);
-        $this->junctionManager->setFileManager($this->fileManager);
-
-        // Initialize update processor
-        $this->updateProcessor = new UpdateProcessor(
-            $this->configLoader,
-            $this->githubParser,
-            $this->fileManager,
-            $this->junctionManager,
-            $this->httpClient
-        );
-        $this->updateProcessor->setDebugCallback($debugCallback);
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debug) {
-            echo "[DEBUG] $msg\n";
-        }
-    }
-
-    public function run(): void
-    {
-        foreach ($this->directoryScanner->getAppFolders() as $folder) {
-            $appPath = $this->directoryScanner->getAppPath($folder);
-            foreach ($this->directoryScanner->getJsonConfigs($appPath) as $jsonFile) {
-                $this->updateProcessor->processJson($folder, $appPath, $jsonFile);
-            }
-        }
-    }
+// Load .env file
+$envFile = __DIR__ . '/.env';
+if (!is_file($envFile)) {
+    throw new RuntimeException('.env file not found');
 }
+
+foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+    if ($line[0] === '#') continue;
+    [$key, $value] = array_map('trim', explode('=', $line, 2));
+    $_ENV[$key] = trim($value, '"\'');
+}
+
+if (empty($_ENV['SOFTWARE_ROOT'])) {
+    throw new RuntimeException('SOFTWARE_ROOT not defined in .env');
+}
+
+$root = $_ENV['SOFTWARE_ROOT'];
+
+$u = new UpdateOrchestrator($root, debug: false);
+$u->run();
+
