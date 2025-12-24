@@ -5,11 +5,13 @@ class DownloadStepHandler
     use DebugTrait;
 
     private GitHubDownloader $githubDownloader;
+    private HtmlPageDownloader $htmlPageDownloader;
     private HttpClient $httpClient;
 
-    public function __construct(GitHubDownloader $githubDownloader, HttpClient $httpClient)
+    public function __construct(GitHubDownloader $githubDownloader, HtmlPageDownloader $htmlPageDownloader, HttpClient $httpClient)
     {
         $this->githubDownloader = $githubDownloader;
+        $this->htmlPageDownloader = $htmlPageDownloader;
         $this->httpClient = $httpClient;
     }
 
@@ -17,6 +19,7 @@ class DownloadStepHandler
     {
         $this->debugCallback = $callback;
         $this->githubDownloader->setDebugCallback($callback);
+        $this->htmlPageDownloader->setDebugCallback($callback);
     }
 
     /**
@@ -31,14 +34,49 @@ class DownloadStepHandler
             return $this->executeGitHub($downloadConfig, $variables, $basePath);
         }
 
-        // HTML page download (not implemented yet)
+        // HTML page download
         if (isset($downloadConfig['pageUrl'])) {
-            $this->dbg("HTML page download not yet implemented");
-            return false;
+            return $this->executeHtmlPage($downloadConfig, $variables, $basePath);
         }
 
         $this->dbg("Download step missing 'url' or 'pageUrl'");
         return false;
+    }
+
+    /**
+     * Download from HTML page
+     */
+    private function executeHtmlPage(array $downloadConfig, array &$variables, string $basePath): bool
+    {
+        $pageUrl = $downloadConfig['pageUrl'] ?? '';
+        if (empty($pageUrl)) {
+            $this->dbg("Download step missing 'pageUrl'");
+            return false;
+        }
+
+        // Get download info (URL and version)
+        $findLink = $downloadConfig['findLink'] ?? null;
+        $versionFrom = $downloadConfig['versionFrom'] ?? null;
+        $result = $this->htmlPageDownloader->getDownloadInfo($pageUrl, $findLink, $versionFrom);
+        
+        if ($result === null) {
+            return false;
+        }
+
+        // Download file to specific path
+        $downloadedFile = $basePath . DIRECTORY_SEPARATOR . basename($result['url']);
+        $this->dbg("Downloading to: $downloadedFile");
+        if (!$this->httpClient->downloadFile($result['url'], $downloadedFile)) {
+            $this->dbg("Download failed");
+            return false;
+        }
+        $this->dbg("Download completed");
+
+        // Set variables for subsequent steps
+        $variables['downloadedFile'] = $downloadedFile;
+        $variables['version'] = $result['version'];
+
+        return true;
     }
 
     /**

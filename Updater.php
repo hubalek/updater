@@ -6,6 +6,7 @@ require_once __DIR__ . '/ConfigLoader.php';
 require_once __DIR__ . '/GitHubParser.php';
 require_once __DIR__ . '/HttpClient.php';
 require_once __DIR__ . '/GitHubDownloader.php';
+require_once __DIR__ . '/HtmlPageDownloader.php';
 require_once __DIR__ . '/ZipExtractor.php';
 require_once __DIR__ . '/SevenZipExtractor.php';
 require_once __DIR__ . '/FileManager.php';
