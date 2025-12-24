@@ -18,13 +18,18 @@ class ConfigLoader
 
     public function mergeFilters(array|null $jsonFilter): array
     {
+        // Start with default filter values
         $filter = $this->defaultFilter;
 
+        // If filter is provided, merge with defaults
+        // Empty arrays will override default values (empty array = no restrictions for that rule)
         if ($jsonFilter !== null && is_array($jsonFilter)) {
             foreach (["mustContain", "mustNotContain", "allowedExt"] as $key) {
+                // If key exists in JSON filter (even if empty array), it overrides default
                 if (array_key_exists($key, $jsonFilter)) {
                     $filter[$key] = $jsonFilter[$key];
                 }
+                // If key doesn't exist, default value is kept
             }
         }
 

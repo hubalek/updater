@@ -25,6 +25,7 @@ class GitHubParser
             $this->dbg("  Asset: $url");
             $ok = true;
 
+            // mustContain: if empty array, no restrictions (all assets pass)
             foreach ($filter["mustContain"] as $word) {
                 if (stripos($url, $word) === false) {
                     $this->dbg("   mustContain failed: $word");
@@ -34,6 +35,7 @@ class GitHubParser
             }
 
             if ($ok) {
+                // mustNotContain: if empty array, no restrictions (all assets pass)
                 foreach ($filter["mustNotContain"] as $word) {
                     if (stripos($url, $word) !== false) {
                         $this->dbg("   mustNotContain failed: $word");
@@ -44,6 +46,7 @@ class GitHubParser
             }
 
             if ($ok) {
+                // allowedExt: if empty array, no extensions allowed (all assets fail)
                 $match = false;
                 foreach ($filter["allowedExt"] as $ext) {
                     if (preg_match('/\.' . preg_quote($ext) . '$/i', $url)) {
