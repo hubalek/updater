@@ -42,8 +42,9 @@ class HtmlPageDownloader
         $this->dbg("Found " . count($links) . " links on page");
 
         // Merge filter with defaults
+        $this->dbg("Original findLink config: " . json_encode($findLink));
         $filter = $this->configLoader->mergeFilters($findLink);
-        $this->dbg("Using filter: " . json_encode($filter));
+        $this->dbg("Merged filter (with defaults): " . json_encode($filter));
         
         // Find matching link using UrlFilter
         $downloadUrl = $this->urlFilter->findMatch($links, $filter);
