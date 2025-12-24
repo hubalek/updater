@@ -61,8 +61,16 @@ class MoveStepHandler
         $baseDir = dirname($fromPattern);
         $pattern = basename($fromPattern);
 
+        $this->dbg("Wildcard move: baseDir=$baseDir, pattern=$pattern");
+
         if (!is_dir($baseDir)) {
             $this->dbg("Base directory does not exist: $baseDir");
+            // Try to list what's in parent directory for debugging
+            $parentDir = dirname($baseDir);
+            if (is_dir($parentDir)) {
+                $items = array_diff(scandir($parentDir), [".", ".."]);
+                $this->dbg("Parent directory contents: " . implode(", ", $items));
+            }
             return false;
         }
 
@@ -73,6 +81,9 @@ class MoveStepHandler
         $files = glob($baseDir . DIRECTORY_SEPARATOR . $pattern);
         if (empty($files)) {
             $this->dbg("No files match pattern: $fromPattern");
+            // List what's actually in baseDir for debugging
+            $items = array_diff(scandir($baseDir), [".", ".."]);
+            $this->dbg("Base directory contents: " . implode(", ", $items));
             return false;
         }
 
