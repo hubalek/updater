@@ -22,13 +22,15 @@ class UpdateProcessor
         $this->fileManager = $fileManager;
         $this->junctionManager = $junctionManager;
         $this->httpClient = $httpClient;
-        $this->stepExecutor = new StepExecutor($fileManager);
+        $this->stepExecutor = new StepExecutor($fileManager, $httpClient, $githubParser, $configLoader);
     }
 
     public function setDebugCallback(callable $callback): void
     {
         $this->debugCallback = $callback;
         $this->stepExecutor->setDebugCallback($callback);
+        $this->httpClient->setDebugCallback($callback);
+        $this->githubParser->setDebugCallback($callback);
     }
 
     private function dbg(string $msg): void
@@ -48,124 +50,75 @@ class UpdateProcessor
         // restore junction if missing
         $this->junctionManager->restoreMissingJunction($appPath, $baseName);
 
-        $run = true;
-
         $cfg = $this->configLoader->loadConfig($configPath);
         if ($cfg === null) {
             $this->dbg("JSON invalid");
-            $run = false;
+            return;
         }
 
-        $apiUrl = $cfg["url"] ?? "";
-        $json   = null;
-        $data   = null;
-
-        if ($run) {
-            $json = $this->httpClient->httpGet($apiUrl);
-            if ($json === false) {
-                $this->dbg("HTTP failed");
-                $run = false;
-            }
+        // Steps are now required
+        if (!isset($cfg["steps"]) || !is_array($cfg["steps"]) || empty($cfg["steps"])) {
+            $this->dbg("Config missing 'steps' array");
+            return;
         }
 
-        if ($run) {
-            $data = json_decode($json, true);
-            if (!is_array($data) || empty($data["assets"])) {
-                $this->dbg("API does not contain assets");
-                $run = false;
-            }
+        // First step must be download
+        $firstStep = $cfg["steps"][0];
+        if (!isset($firstStep["download"])) {
+            $this->dbg("First step must be 'download'");
+            return;
         }
 
-        $assetUrl = null;
-        $version  = null;
-        $zipPath  = null;
-        $extPath  = null;
-        $lnkPath  = null;
-
-        if ($run) {
-            $filter   = $this->configLoader->mergeFilters($cfg["filter"] ?? null);
-            $assetUrl = $this->githubParser->findAsset($data["assets"], $filter);
-
-            if ($assetUrl === null) {
-                $run = false;
-            }
-        }
-
-        if ($run) {
-            $version = $this->githubParser->extractVersionName($assetUrl);
-            $this->dbg("Extracted version: $version");
-            
-            // Check if version directory exists (extracted), not just ZIP file
-            $versionDir = $appPath . DIRECTORY_SEPARATOR . $version;
-            if (is_dir($versionDir)) {
-                $this->dbg("Version directory already exists, skipping");
-                $run = false;
-            }
-        }
-
-        // Check if config uses new steps-based approach
-        $hasSteps = isset($cfg["steps"]) && is_array($cfg["steps"]) && !empty($cfg["steps"]);
-        $this->dbg("Has steps: " . ($hasSteps ? "yes" : "no"));
-
-        if ($run) {
-            if ($hasSteps) {
-                $this->dbg("Using steps-based processing");
-                // New steps-based processing
-                $run = $this->processWithSteps($cfg, $assetUrl, $version, $appPath, $appFolder, $baseName);
-            } else {
-                $this->dbg("Using legacy processing");
-                // Legacy processing (backward compatibility)
-                $run = $this->processLegacy($assetUrl, $version, $appPath, $baseName);
-            }
-        }
-
-        if ($run) {
-            echo "UPDATED - {$appFolder}/{$baseName} - {$version}\n";
-        }
-    }
-
-    /**
-     * Process using new steps-based configuration
-     */
-    private function processWithSteps(array $cfg, string $assetUrl, string $version, string $appPath, string $appFolder, string $baseName): bool
-    {
-        // Download file
-        $downloadedFile = $appPath . DIRECTORY_SEPARATOR . basename($assetUrl);
-        $this->dbg("Downloading to: $downloadedFile");
-        if (!$this->httpClient->downloadFile($assetUrl, $downloadedFile)) {
-            $this->dbg("Download failed");
-            return false;
-        }
-        $this->dbg("Download completed");
-
-        // Determine final directory name
-        $finalDirName = $version;
-        if (isset($cfg["finalDirPattern"])) {
-            $finalDirName = str_replace('{version}', $version, $cfg["finalDirPattern"]);
-        }
-        $finalDir = $appPath . DIRECTORY_SEPARATOR . $finalDirName;
-        $this->dbg("Final directory: $finalDir");
-
-        // Prepare variables for step execution
+        // Prepare initial variables
         $variables = [
-            'downloadedFile' => $downloadedFile,
-            'finalDir' => $finalDir,
-            'version' => $version,
             'appPath' => $appPath,
             'appFolder' => $appFolder,
             'baseName' => $baseName
         ];
 
-        // Execute steps in order
+        // Execute download step first to get version and downloadedFile
+        $this->dbg("Executing download step");
+        if (!$this->stepExecutor->executeStep($firstStep, $variables, $appPath)) {
+            $this->dbg("Download step failed");
+            return;
+        }
+
+        // Check if version and downloadedFile were set
+        if (!isset($variables['version']) || !isset($variables['downloadedFile'])) {
+            $this->dbg("Download step did not set 'version' and 'downloadedFile'");
+            return;
+        }
+
+        $version = $variables['version'];
+        $this->dbg("Version: $version");
+
+        // Check if version directory already exists
+        $finalDirName = $version;
+        if (isset($cfg["finalDirPattern"])) {
+            $finalDirName = str_replace('{version}', $version, $cfg["finalDirPattern"]);
+        }
+        $finalDir = $appPath . DIRECTORY_SEPARATOR . $finalDirName;
+        
+        if (is_dir($finalDir)) {
+            $this->dbg("Version directory already exists, skipping: $finalDir");
+            return;
+        }
+
+        // Set finalDir in variables for subsequent steps
+        $variables['finalDir'] = $finalDir;
+        $this->dbg("Final directory: $finalDir");
+
+        // Execute remaining steps (skip first download step)
         $steps = $cfg["steps"];
-        $this->dbg("Executing " . count($steps) . " step(s)");
-        foreach ($steps as $index => $step) {
-            $this->dbg("Executing step " . ($index + 1) . ": " . json_encode($step));
+        $this->dbg("Executing " . (count($steps) - 1) . " additional step(s)");
+        for ($i = 1; $i < count($steps); $i++) {
+            $step = $steps[$i];
+            $this->dbg("Executing step " . ($i + 1) . ": " . json_encode($step));
             if (!$this->stepExecutor->executeStep($step, $variables, $appPath)) {
                 $this->dbg("Step execution failed: " . json_encode($step));
-                return false;
+                return;
             }
-            $this->dbg("Step " . ($index + 1) . " completed");
+            $this->dbg("Step " . ($i + 1) . " completed");
         }
 
         // Create junction to final directory
@@ -174,28 +127,8 @@ class UpdateProcessor
         $this->junctionManager->createJunction($finalDir, $lnkPath, $baseName);
         $this->dbg("Junction created");
 
-        return true;
+        echo "UPDATED - {$appFolder}/{$baseName} - {$version}\n";
     }
 
-    /**
-     * Legacy processing (backward compatibility)
-     */
-    private function processLegacy(string $assetUrl, string $version, string $appPath, string $baseName): bool
-    {
-        $zipPath = $appPath . DIRECTORY_SEPARATOR . $version . ".zip";
-        $extPath = $appPath . DIRECTORY_SEPARATOR . $version;
-        $lnkPath = $appPath . DIRECTORY_SEPARATOR . $baseName;
-
-        if (!$this->httpClient->downloadFile($assetUrl, $zipPath)) {
-            return false;
-        }
-
-        if (!$this->fileManager->extractZip($zipPath, $extPath)) {
-            return false;
-        }
-
-        $this->junctionManager->createJunction($extPath, $lnkPath, $baseName);
-        return true;
-    }
 }
 
