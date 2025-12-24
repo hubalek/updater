@@ -1,0 +1,8 @@
+{
+  "url": "https://api.github.com/repos/SilverGreen93/putty/releases/latest",
+  "filter": {
+    "mustContain": ["PuTTYPlus"],
+    "mustNotContain": [],
+    "allowedExt": ["zip"]
+  }
+}
