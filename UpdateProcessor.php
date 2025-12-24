@@ -180,6 +180,5 @@ class UpdateProcessor
         $this->junctionManager->createJunction($extPath, $lnkPath, $baseName);
         return true;
     }
-    }
 }
 
