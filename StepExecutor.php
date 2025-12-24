@@ -61,6 +61,10 @@ class StepExecutor
             return $this->utilityHandler->executeSleep($step['sleep']);
         }
 
+        if (isset($step['remove'])) {
+            return $this->utilityHandler->executeRemove($step['remove'], $variables, $basePath);
+        }
+
         $this->dbg("Unknown step type: " . json_encode($step));
         return false;
     }

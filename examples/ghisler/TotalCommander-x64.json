@@ -24,6 +24,8 @@
         "to": "$tempDir"
       }
     },
+    { "remove": "$tempDir/d" },
+    { "remove": "$tempDir/e" },
     {
       "move": {
         "from": "$tempDir/*",
