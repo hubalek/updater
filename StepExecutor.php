@@ -20,7 +20,7 @@ class StepExecutor
         $this->downloadHandler = new DownloadStepHandler($githubDownloader, $htmlPageDownloader, $httpClient);
         $this->extractHandler = new ExtractStepHandler($fileManager);
         $this->moveHandler = new MoveStepHandler($fileManager);
-        $this->utilityHandler = new UtilityStepHandler();
+        $this->utilityHandler = new UtilityStepHandler($fileManager);
     }
 
     public function setDebugCallback(callable $callback): void
@@ -63,6 +63,10 @@ class StepExecutor
 
         if (isset($step['remove'])) {
             return $this->utilityHandler->executeRemove($step['remove'], $variables, $basePath);
+        }
+
+        if (isset($step['copy'])) {
+            return $this->utilityHandler->executeCopy($step['copy'], $variables, $basePath);
         }
 
         $this->dbg("Unknown step type: " . json_encode($step));

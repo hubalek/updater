@@ -4,6 +4,13 @@ class UtilityStepHandler
 {
     use DebugTrait;
 
+    private FileManager $fileManager;
+
+    public function __construct(FileManager $fileManager)
+    {
+        $this->fileManager = $fileManager;
+    }
+
     /**
      * Execute sleep step
      * @param int|array $sleepConfig Sleep duration in seconds, or array with "seconds" key
@@ -116,6 +123,52 @@ class UtilityStepHandler
         }
 
         return @rmdir($dir);
+    }
+
+    /**
+     * Execute copy step - copy files from previous installation
+     * @param array $copyConfig Configuration with "from" (file path in previous installation) and optional "to" (destination, defaults to tempDir)
+     * @param array $variables Variables for path resolution
+     * @param string $basePath Base path for resolving relative paths
+     * @return bool Success status
+     */
+    public function executeCopy(array $copyConfig, array $variables, string $basePath): bool
+    {
+        $fromFile = $copyConfig['from'] ?? '';
+        $toPath = $copyConfig['to'] ?? null;
+
+        if (empty($fromFile)) {
+            $this->dbg("Copy step missing 'from'");
+            return false;
+        }
+
+        // Find previous installation
+        $appPath = $variables['appPath'] ?? $basePath;
+        $baseName = $variables['baseName'] ?? '';
+        $excludeDir = $variables['finalDir'] ?? '';
+
+        $previousInstallation = $this->fileManager->findPreviousInstallation($appPath, $baseName, $excludeDir);
+        if ($previousInstallation === null) {
+            $this->dbg("No previous installation found, skipping copy");
+            return true; // Not an error if no previous installation exists
+        }
+
+        // Resolve source path in previous installation
+        $sourcePath = $previousInstallation . DIRECTORY_SEPARATOR . $fromFile;
+        if (!file_exists($sourcePath)) {
+            $this->dbg("Source file does not exist in previous installation: $sourcePath");
+            return true; // Not an error if file doesn't exist in previous installation
+        }
+
+        // Resolve destination path (default to tempDir)
+        if ($toPath === null) {
+            $toPath = ($variables['tempDir'] ?? $basePath) . DIRECTORY_SEPARATOR . basename($fromFile);
+        } else {
+            $toPath = PathResolver::resolvePath($toPath, $variables, $basePath);
+        }
+
+        $this->dbg("Copying from previous installation: $sourcePath -> $toPath");
+        return $this->fileManager->copyFileOrDir($sourcePath, $toPath);
     }
 }
 

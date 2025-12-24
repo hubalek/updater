@@ -27,12 +27,18 @@
     { "remove": "$tempDir/d" },
     { "remove": "$tempDir/e" },
     {
+      "copy": {
+        "from": "wincmd.key",
+        "to": "$tempDir/wincmd.key"
+      }
+    },
+    {
       "move": {
         "from": "$tempDir/*",
         "to": "$finalDir/"
       }
     },
-    { "sleep": 5 }
+    { "sleep": 1 }
   ]
 }
 

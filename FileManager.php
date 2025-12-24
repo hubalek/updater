@@ -74,6 +74,146 @@ class FileManager
     }
 
     /**
+     * Find previous installation directory
+     * First tries to find junction (symlink), if not found, finds last directory alphabetically
+     * @param string $appPath Application path
+     * @param string $baseName Base name (junction name)
+     * @param string $excludeDir Directory to exclude (current finalDir)
+     * @return string|null Path to previous installation or null if not found
+     */
+    public function findPreviousInstallation(string $appPath, string $baseName, string $excludeDir = ''): ?string
+    {
+        // First, try to find junction (symlink)
+        $junctionPath = $appPath . DIRECTORY_SEPARATOR . $baseName;
+        if (is_dir($junctionPath)) {
+            // On Windows, readlink returns the target path for junctions
+            $target = @readlink($junctionPath);
+            if ($target !== false) {
+                // Convert relative path to absolute if needed
+                if (!preg_match('/^[A-Za-z]:' . preg_quote(DIRECTORY_SEPARATOR, '/') . '|^' . preg_quote(DIRECTORY_SEPARATOR, '/') . preg_quote(DIRECTORY_SEPARATOR, '/') . '/', $target)) {
+                    // Relative path, resolve relative to junction's directory
+                    $target = realpath(dirname($junctionPath) . DIRECTORY_SEPARATOR . $target) ?: $target;
+                }
+                if (is_dir($target)) {
+                    $this->dbg("Found previous installation via junction: $target");
+                    return $target;
+                }
+            }
+        }
+
+        // If no junction, find last directory alphabetically (excluding current finalDir and temp dirs)
+        $items = array_diff(scandir($appPath), [".", ".."]);
+        $directories = [];
+        
+        foreach ($items as $item) {
+            $fullPath = $appPath . DIRECTORY_SEPARATOR . $item;
+            
+            // Skip if not a directory
+            if (!is_dir($fullPath)) {
+                continue;
+            }
+            
+            // Skip current finalDir
+            if ($excludeDir !== '' && realpath($fullPath) === realpath($excludeDir)) {
+                continue;
+            }
+            
+            // Skip temp directories (starting with .temp_)
+            if (strpos($item, '.temp_') === 0) {
+                continue;
+            }
+            
+            // Skip junction itself (baseName)
+            if (strcasecmp($item, $baseName) === 0) {
+                continue;
+            }
+            
+            $directories[] = $item;
+        }
+        
+        if (empty($directories)) {
+            $this->dbg("No previous installation found");
+            return null;
+        }
+        
+        // Sort alphabetically and get last one
+        sort($directories);
+        $lastDir = end($directories);
+        $previousPath = $appPath . DIRECTORY_SEPARATOR . $lastDir;
+        
+        $this->dbg("Found previous installation (alphabetically last): $previousPath");
+        return $previousPath;
+    }
+
+    /**
+     * Copy file or directory
+     * @param string $from Source path
+     * @param string $to Destination path
+     * @return bool Success status
+     */
+    public function copyFileOrDir(string $from, string $to): bool
+    {
+        if (!file_exists($from)) {
+            $this->dbg("Source does not exist: $from");
+            return false;
+        }
+
+        // Create destination directory if needed
+        $toDir = is_dir($to) ? $to : dirname($to);
+        if (!is_dir($toDir)) {
+            mkdir($toDir, 0777, true);
+        }
+
+        if (is_dir($from)) {
+            return $this->copyDirectory($from, $to);
+        } else {
+            // If destination is a directory, copy into it
+            if (is_dir($to)) {
+                $to = $to . DIRECTORY_SEPARATOR . basename($from);
+            }
+            $this->dbg("Copying file: $from -> $to");
+            return @copy($from, $to);
+        }
+    }
+
+    /**
+     * Recursively copy directory
+     */
+    private function copyDirectory(string $from, string $to): bool
+    {
+        if (!is_dir($from)) {
+            return false;
+        }
+
+        // If destination exists and is a directory, copy into it
+        if (is_dir($to)) {
+            $to = $to . DIRECTORY_SEPARATOR . basename($from);
+        }
+
+        if (!is_dir($to)) {
+            mkdir($to, 0777, true);
+        }
+
+        $files = array_diff(scandir($from), ['.', '..']);
+        foreach ($files as $file) {
+            $fromPath = $from . DIRECTORY_SEPARATOR . $file;
+            $toPath = $to . DIRECTORY_SEPARATOR . $file;
+            
+            if (is_dir($fromPath)) {
+                if (!$this->copyDirectory($fromPath, $toPath)) {
+                    return false;
+                }
+            } else {
+                if (!@copy($fromPath, $toPath)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Retry rename operation with exponential backoff
      */
     private function retryRename(string $src, string $dst): bool
