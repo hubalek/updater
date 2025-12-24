@@ -1,11 +1,15 @@
 {
-  "url": "https://api.github.com/repos/dbeaver/dbeaver/releases/latest",
-  "filter": {
-    "mustContain": ["win32.win32.x86_64", "zip"],
-    "mustNotContain": ["installer", "msi", "exe", "arm"],
-    "allowedExt": ["zip"]
-  },
   "steps": [
+    {
+      "download": {
+        "url": "https://api.github.com/repos/dbeaver/dbeaver/releases/latest",
+        "filter": {
+          "mustContain": ["win32.win32.x86_64", "zip"],
+          "mustNotContain": ["installer", "msi", "exe", "arm"],
+          "allowedExt": ["zip"]
+        }
+      }
+    },
     { "extractZip": "$downloadedFile" }
   ]
 }

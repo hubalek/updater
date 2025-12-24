@@ -1,9 +1,13 @@
 {
-  "url": "https://api.github.com/repos/brondavies/TrayToolbar/releases/latest",
-  "filter": {
-    "allowedExt": ["zip"]
-  },
   "steps": [
+    {
+      "download": {
+        "url": "https://api.github.com/repos/brondavies/TrayToolbar/releases/latest",
+        "filter": {
+          "allowedExt": ["zip"]
+        }
+      }
+    },
     { "extractZip": "$downloadedFile" }
   ]
 }

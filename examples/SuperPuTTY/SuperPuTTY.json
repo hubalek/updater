@@ -1,11 +1,15 @@
 {
-  "url": "https://api.github.com/repos/jimradford/superputty/releases/latest",
-  "filter": {
-    "mustContain": ["SuperPuTTY"],
-    "mustNotContain": ["Source", "msi"],
-    "allowedExt": ["zip"]
-  },
   "steps": [
+    {
+      "download": {
+        "url": "https://api.github.com/repos/jimradford/superputty/releases/latest",
+        "filter": {
+          "mustContain": ["SuperPuTTY"],
+          "mustNotContain": ["Source", "msi"],
+          "allowedExt": ["zip"]
+        }
+      }
+    },
     { "extractZip": "$downloadedFile" }
   ]
 }
