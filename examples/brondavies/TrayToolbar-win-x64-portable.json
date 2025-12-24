@@ -4,5 +4,8 @@
     "mustContain": ["x64", "portable"],
     "mustNotContain": ["arm"],
     "allowedExt": ["zip"]
-  }
+  },
+  "steps": [
+    { "extractZip": "$downloadedFile" }
+  ]
 }

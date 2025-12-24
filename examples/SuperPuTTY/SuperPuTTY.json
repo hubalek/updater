@@ -4,5 +4,8 @@
     "mustContain": ["SuperPuTTY"],
     "mustNotContain": ["Source", "msi"],
     "allowedExt": ["zip"]
-  }
+  },
+  "steps": [
+    { "extractZip": "$downloadedFile" }
+  ]
 }

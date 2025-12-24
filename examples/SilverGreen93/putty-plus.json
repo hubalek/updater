@@ -4,5 +4,8 @@
     "mustContain": ["PuTTYPlus"],
     "mustNotContain": [],
     "allowedExt": ["zip"]
-  }
+  },
+  "steps": [
+    { "extractZip": "$downloadedFile" }
+  ]
 }
