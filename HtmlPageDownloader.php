@@ -175,11 +175,9 @@ class HtmlPageDownloader
         
         if ($versionFrom === "exe") {
             // Extract version from EXE filename like tcmd1156x64.exe → 11.56
-            // Pattern: tcmd followed by 1 digit (major) and 2+ digits (minor)
-            // Example: tcmd1156x64 → major=1, minor=156 → 1.156
-            // But we want 11.56, so we need different pattern
-            // Actually: tcmd1156 → 11.56 means first 2 digits are major, rest is minor
-            if (preg_match('/tcmd(\d{2})(\d+)/i', $filename, $matches)) {
+            // Pattern: tcmd followed by 2 digits (major) and 2 digits (minor) before x64
+            // Example: tcmd1156x64 → major=11, minor=56
+            if (preg_match('/tcmd(\d{2})(\d{2})x64/i', $filename, $matches)) {
                 $major = $matches[1];
                 $minor = $matches[2];
                 return $major . '.' . $minor;
