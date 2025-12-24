@@ -4,60 +4,32 @@ class GitHubParser
 {
     use DebugTrait;
 
+    private UrlFilter $urlFilter;
+
+    public function __construct()
+    {
+        $this->urlFilter = new UrlFilter();
+    }
+
+    public function setDebugCallback(callable $callback): void
+    {
+        $this->debugCallback = $callback;
+        $this->urlFilter->setDebugCallback($callback);
+    }
+
     public function findAsset(array $assets, array $filter): string|null
     {
-        $this->dbg("Checking " . count($assets) . " assets…");
-
+        // Extract URLs from assets
+        $urls = [];
         foreach ($assets as $asset) {
             $url = $asset["browser_download_url"] ?? "";
-            $this->dbg("  Asset: $url");
-            $ok = true;
-
-            // mustContain: if empty array, no restrictions (all assets pass)
-            foreach ($filter["mustContain"] as $word) {
-                if (stripos($url, $word) === false) {
-                    $this->dbg("   mustContain failed: $word");
-                    $ok = false;
-                    break;
-                }
+            if (!empty($url)) {
+                $urls[] = $url;
             }
-
-            if ($ok) {
-                // mustNotContain: if empty array, no restrictions (all assets pass)
-                foreach ($filter["mustNotContain"] as $word) {
-                    if (stripos($url, $word) !== false) {
-                        $this->dbg("   mustNotContain failed: $word");
-                        $ok = false;
-                        break;
-                    }
-                }
-            }
-
-            if ($ok) {
-                // allowedExt: if empty array, no extensions allowed (all assets fail)
-                $match = false;
-                foreach ($filter["allowedExt"] as $ext) {
-                    if (preg_match('/\.' . preg_quote($ext) . '$/i', $url)) {
-                        $match = true;
-                        break;
-                    }
-                }
-                if (!$match) {
-                    $this->dbg("   allowedExt failed");
-                    $ok = false;
-                }
-            }
-
-            if ($ok) {
-                $this->dbg("  ✔ Asset matches");
-                return $url;
-            }
-
-            $this->dbg("  ✘ Asset does not match");
         }
 
-        $this->dbg("No suitable asset found");
-        return null;
+        // Use UrlFilter to find matching URL
+        return $this->urlFilter->findMatch($urls, $filter);
     }
 
     public function extractVersionName(string $url): string

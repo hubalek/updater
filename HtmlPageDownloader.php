@@ -6,11 +6,19 @@ class HtmlPageDownloader
 
     private HttpClient $httpClient;
     private ConfigLoader $configLoader;
+    private UrlFilter $urlFilter;
 
     public function __construct(HttpClient $httpClient, ConfigLoader $configLoader)
     {
         $this->httpClient = $httpClient;
         $this->configLoader = $configLoader;
+        $this->urlFilter = new UrlFilter();
+    }
+
+    public function setDebugCallback(callable $callback): void
+    {
+        $this->debugCallback = $callback;
+        $this->urlFilter->setDebugCallback($callback);
     }
 
     /**
@@ -36,8 +44,8 @@ class HtmlPageDownloader
         // Merge filter with defaults
         $filter = $this->configLoader->mergeFilters($findLink);
         
-        // Find matching link
-        $downloadUrl = $this->findLink($links, $filter);
+        // Find matching link using UrlFilter
+        $downloadUrl = $this->urlFilter->findMatch($links, $filter);
         if ($downloadUrl === null) {
             $this->dbg("No matching link found");
             return null;
@@ -104,65 +112,6 @@ class HtmlPageDownloader
         }
     }
 
-    /**
-     * Find link matching filter criteria
-     */
-    private function findLink(array $links, array $filter): ?string
-    {
-        $this->dbg("Checking " . count($links) . " links…");
-
-        foreach ($links as $url) {
-            $this->dbg("  Link: $url");
-            $ok = true;
-
-            // mustContain: if empty array, no restrictions (all links pass)
-            foreach ($filter["mustContain"] as $word) {
-                if (stripos($url, $word) === false) {
-                    $this->dbg("   mustContain failed: $word");
-                    $ok = false;
-                    break;
-                }
-            }
-
-            if ($ok) {
-                // mustNotContain: if empty array, no restrictions (all links pass)
-                foreach ($filter["mustNotContain"] as $word) {
-                    if (stripos($url, $word) !== false) {
-                        $this->dbg("   mustNotContain failed: $word");
-                        $ok = false;
-                        break;
-                    }
-                }
-            }
-
-            if ($ok) {
-                // allowedExt: if empty array, no extensions allowed (all links fail)
-                if (!empty($filter["allowedExt"])) {
-                    $match = false;
-                    foreach ($filter["allowedExt"] as $ext) {
-                        if (preg_match('/\.' . preg_quote($ext) . '$/i', $url)) {
-                            $match = true;
-                            break;
-                        }
-                    }
-                    if (!$match) {
-                        $this->dbg("   allowedExt failed");
-                        $ok = false;
-                    }
-                }
-            }
-
-            if ($ok) {
-                $this->dbg("  ✔ Link matches");
-                return $url;
-            }
-
-            $this->dbg("  ✘ Link does not match");
-        }
-
-        $this->dbg("No suitable link found");
-        return null;
-    }
 
     /**
      * Extract version from URL or filename
