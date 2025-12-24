@@ -78,8 +78,8 @@ class StepExecutor
             return false;
         }
 
-        // Extract to same directory as source file
-        $extractTo = dirname($sourcePath);
+        // Extract to finalDir if available, otherwise to same directory as source file
+        $extractTo = $variables['finalDir'] ?? dirname($sourcePath);
         
         return $this->fileManager->extract7z($sourcePath, $extractTo);
     }
@@ -106,8 +106,8 @@ class StepExecutor
             return false;
         }
 
-        // Extract to same directory as source file
-        $extractTo = dirname($sourcePath);
+        // Extract to finalDir if available, otherwise to same directory as source file
+        $extractTo = $variables['finalDir'] ?? dirname($sourcePath);
         
         return $this->fileManager->extractZip($sourcePath, $extractTo);
     }
