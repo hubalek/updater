@@ -18,7 +18,7 @@ class GitHubParser
 
     public function findAsset(array $assets, array $filter): string|null
     {
-        $this->dbg("Kontroluji " . count($assets) . " assetů…");
+        $this->dbg("Checking " . count($assets) . " assets…");
 
         foreach ($assets as $asset) {
             $url = $asset["browser_download_url"] ?? "";
@@ -27,7 +27,7 @@ class GitHubParser
 
             foreach ($filter["mustContain"] as $word) {
                 if (stripos($url, $word) === false) {
-                    $this->dbg("   mustContain selhalo: $word");
+                    $this->dbg("   mustContain failed: $word");
                     $ok = false;
                     break;
                 }
@@ -36,7 +36,7 @@ class GitHubParser
             if ($ok) {
                 foreach ($filter["mustNotContain"] as $word) {
                     if (stripos($url, $word) !== false) {
-                        $this->dbg("   mustNotContain selhalo: $word");
+                        $this->dbg("   mustNotContain failed: $word");
                         $ok = false;
                         break;
                     }
@@ -52,20 +52,20 @@ class GitHubParser
                     }
                 }
                 if (!$match) {
-                    $this->dbg("   allowedExt selhalo");
+                    $this->dbg("   allowedExt failed");
                     $ok = false;
                 }
             }
 
             if ($ok) {
-                $this->dbg("  ✔ Asset vyhovuje");
+                $this->dbg("  ✔ Asset matches");
                 return $url;
             }
 
-            $this->dbg("  ✘ Asset nevyhovuje");
+            $this->dbg("  ✘ Asset does not match");
         }
 
-        $this->dbg("Nenalezen vhodný asset");
+        $this->dbg("No suitable asset found");
         return null;
     }
 

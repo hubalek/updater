@@ -41,7 +41,7 @@ class JunctionManager
 
         if (!is_dir($target)) return;
 
-        $this->dbg("Junction chybí → vytvářím $base → $latest");
+        $this->dbg("Junction missing → creating $base → $latest");
 
         exec('cmd /c mklink /J "' . $linkPath . '" "' . $target . '"');
     }

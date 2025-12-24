@@ -16,7 +16,7 @@ class Updater
     {
         $this->debug = $debug;
 
-        // Inicializace komponent
+        // Initialize components
         $this->directoryScanner = new DirectoryScanner($root);
         $this->configLoader = new ConfigLoader();
         $this->githubParser = new GitHubParser();
@@ -24,7 +24,7 @@ class Updater
         $this->junctionManager = new JunctionManager();
         $this->httpClient = new HttpClient();
 
-        // Nastavení debug callbacků
+        // Setup debug callbacks
         $debugCallback = fn(string $msg) => $this->dbg($msg);
         $this->githubParser->setDebugCallback($debugCallback);
         $this->fileManager->setDebugCallback($debugCallback);
@@ -32,7 +32,7 @@ class Updater
         $this->httpClient->setDebugCallback($debugCallback);
         $this->junctionManager->setFileManager($this->fileManager);
 
-        // Inicializace procesoru aktualizací
+        // Initialize update processor
         $this->updateProcessor = new UpdateProcessor(
             $this->configLoader,
             $this->githubParser,

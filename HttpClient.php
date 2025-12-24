@@ -33,7 +33,7 @@ class HttpClient
 
     public function downloadFile(string $url, string $save): bool
     {
-        $this->dbg("Stahuji: $url");
+        $this->dbg("Downloading: $url");
 
         $fp = fopen($save, "w+b");
         if (!$fp) return false;

@@ -82,7 +82,7 @@ class FileManager
             return false;
         }
 
-        // obsah cílové složky po rozbalení
+        // target directory contents after extraction
         $items = array_diff(scandir($to), [".", ".."]);
         $dirs  = [];
 
@@ -90,28 +90,28 @@ class FileManager
             if (is_dir($to . DIRECTORY_SEPARATOR . $i)) {
                 $dirs[] = $i;
             } else {
-                // jsou tu soubory na top-level → neflattenujeme
+                // files are at top-level → don't flatten
                 return true;
             }
         }
 
-        // flatten pouze pokud je na top-level přesně jeden adresář
+        // flatten only if there is exactly one directory at top-level
         if (count($dirs) === 1) {
             $inner      = $to . DIRECTORY_SEPARATOR . $dirs[0];
             $innerItems = array_diff(scandir($inner), [".", ".."]);
 
-            // zvedneme obsah vnitřního adresáře o úroveň výš
+            // move inner directory contents one level up
             foreach ($innerItems as $it) {
                 $src = $inner . DIRECTORY_SEPARATOR . $it;
                 $dst = $to   . DIRECTORY_SEPARATOR . $it;
 
                 if (!$this->retryRename($src, $dst)) {
-                    // když se něco nepodaří přesunout ani po retry, necháme to být
+                    // if something fails to move even after retry, leave it as is
                     return true;
                 }
             }
 
-            // pokus o smazání prázdné mezisložky (dvoufázově, jako u junction)
+            // attempt to remove empty intermediate directory (two-phase, like junction)
             if (is_dir($inner)) {
                 @rmdir($inner);
 

@@ -37,19 +37,19 @@ class UpdateProcessor
 
     public function processJson(string $appFolder, string $appPath, string $jsonFile): void
     {
-        $this->dbg("=== Zpracovávám $jsonFile v $appFolder ===");
+        $this->dbg("=== Processing $jsonFile in $appFolder ===");
 
         $baseName   = pathinfo($jsonFile, PATHINFO_FILENAME);
         $configPath = $appPath . DIRECTORY_SEPARATOR . $jsonFile;
 
-        // obnov junction pokud chybí
+        // restore junction if missing
         $this->junctionManager->restoreMissingJunction($appPath, $baseName);
 
         $run = true;
 
         $cfg = $this->configLoader->loadConfig($configPath);
         if ($cfg === null) {
-            $this->dbg("JSON nevalidní");
+            $this->dbg("JSON invalid");
             $run = false;
         }
 
@@ -60,7 +60,7 @@ class UpdateProcessor
         if ($run) {
             $json = $this->httpClient->httpGet($apiUrl);
             if ($json === false) {
-                $this->dbg("HTTP selhalo");
+                $this->dbg("HTTP failed");
                 $run = false;
             }
         }
@@ -68,7 +68,7 @@ class UpdateProcessor
         if ($run) {
             $data = json_decode($json, true);
             if (!is_array($data) || empty($data["assets"])) {
-                $this->dbg("API neobsahuje assets");
+                $this->dbg("API does not contain assets");
                 $run = false;
             }
         }
