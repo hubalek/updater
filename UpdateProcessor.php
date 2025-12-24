@@ -101,6 +101,12 @@ class UpdateProcessor
         // Set finalDir in variables for subsequent steps
         $variables['finalDir'] = $finalDir;
         $this->dbg("Final directory: $finalDir");
+        
+        // Create finalDir if it doesn't exist
+        if (!is_dir($finalDir)) {
+            mkdir($finalDir, 0777, true);
+            $this->dbg("Created final directory: $finalDir");
+        }
 
         // Create temp directory for temporary extraction
         $tempDir = $appPath . DIRECTORY_SEPARATOR . '.temp_' . uniqid();
