@@ -29,6 +29,9 @@ if (empty($_ENV['SOFTWARE_ROOT'])) {
 
 $root = $_ENV['SOFTWARE_ROOT'];
 
-$u = new UpdateOrchestrator($root, debug: false);
+// Load debug setting from .env, default to false if not set
+$debug = isset($_ENV['DEBUG']) && strtolower(trim($_ENV['DEBUG'])) === 'true';
+
+$u = new UpdateOrchestrator($root, debug: $debug);
 $u->run();
 
