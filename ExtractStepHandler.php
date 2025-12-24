@@ -28,7 +28,17 @@ class ExtractStepHandler
             }
         }
 
+        // Resolve source path
         $sourcePath = PathResolver::resolvePath($source, $variables, $basePath);
+
+        // If source file doesn't exist and we have a tempDir, try looking there
+        if (!file_exists($sourcePath) && isset($variables['tempDir']) && is_dir($variables['tempDir'])) {
+            $tempSourcePath = PathResolver::resolvePath($source, $variables, $variables['tempDir']);
+            if (file_exists($tempSourcePath)) {
+                $sourcePath = $tempSourcePath;
+                $this->dbg("Found source in tempDir: $sourcePath");
+            }
+        }
 
         $this->dbg("Extracting $type: $sourcePath");
 
