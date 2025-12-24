@@ -12,14 +12,25 @@
         "versionFrom": "exe"
       }
     },
-    { "extract7z": "$downloadedFile" },
-    { "extract7z": "INSTALL.CAB" },
+    {
+      "extract7z": {
+        "source": "$downloadedFile",
+        "to": "$tempDir"
+      }
+    },
+    {
+      "extract7z": {
+        "source": "INSTALL.CAB",
+        "to": "$tempDir"
+      }
+    },
     {
       "move": {
-        "from": "INSTALL/*",
+        "from": "$tempDir/INSTALL/*",
         "to": "$finalDir/"
       }
-    }
+    },
+    { "sleep": 5 }
   ]
 }
 

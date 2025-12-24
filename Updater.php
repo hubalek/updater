@@ -17,6 +17,7 @@ require_once __DIR__ . '/PathResolver.php';
 require_once __DIR__ . '/DownloadStepHandler.php';
 require_once __DIR__ . '/ExtractStepHandler.php';
 require_once __DIR__ . '/MoveStepHandler.php';
+require_once __DIR__ . '/UtilityStepHandler.php';
 require_once __DIR__ . '/StepExecutor.php';
 require_once __DIR__ . '/UpdateProcessor.php';
 require_once __DIR__ . '/UpdateOrchestrator.php';

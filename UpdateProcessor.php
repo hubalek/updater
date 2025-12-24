@@ -102,6 +102,14 @@ class UpdateProcessor
         $variables['finalDir'] = $finalDir;
         $this->dbg("Final directory: $finalDir");
 
+        // Create temp directory for temporary extraction
+        $tempDir = $appPath . DIRECTORY_SEPARATOR . '.temp_' . uniqid();
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+        $variables['tempDir'] = $tempDir;
+        $this->dbg("Temp directory: $tempDir");
+
         // Execute remaining steps (skip first download step)
         $steps = $cfg["steps"];
         $this->dbg("Executing " . (count($steps) - 1) . " additional step(s)");
@@ -121,7 +129,34 @@ class UpdateProcessor
         $this->junctionManager->createJunction($finalDir, $lnkPath, $baseName);
         $this->dbg("Junction created");
 
+        // Cleanup temp directory if it exists
+        if (isset($variables['tempDir']) && is_dir($variables['tempDir'])) {
+            $this->dbg("Cleaning up temp directory: " . $variables['tempDir']);
+            $this->removeDirectory($variables['tempDir']);
+        }
+
         echo "UPDATED - {$appFolder}/{$baseName} - {$version}\n";
+    }
+
+    /**
+     * Recursively remove directory
+     */
+    private function removeDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . DIRECTORY_SEPARATOR . $file;
+            if (is_dir($path)) {
+                $this->removeDirectory($path);
+            } else {
+                @unlink($path);
+            }
+        }
+        @rmdir($dir);
     }
 
 }

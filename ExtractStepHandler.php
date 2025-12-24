@@ -14,8 +14,20 @@ class ExtractStepHandler
     /**
      * Execute extract step (common logic for both ZIP and 7z)
      */
-    private function executeExtract(string $source, array $variables, string $basePath, string $type, callable $extractFn): bool
+    private function executeExtract(string|array $sourceConfig, array $variables, string $basePath, string $type, callable $extractFn): bool
     {
+        // Support both string (source) and array (source + to)
+        $source = is_string($sourceConfig) ? $sourceConfig : ($sourceConfig['source'] ?? '');
+        $extractTo = null;
+        
+        if (is_array($sourceConfig)) {
+            $extractTo = $sourceConfig['to'] ?? null;
+            if ($extractTo !== null) {
+                // Use PathResolver to resolve the "to" path
+                $extractTo = PathResolver::resolvePath($extractTo, $variables, $basePath);
+            }
+        }
+
         $sourcePath = PathResolver::resolvePath($source, $variables, $basePath);
 
         $this->dbg("Extracting $type: $sourcePath");
@@ -25,26 +37,31 @@ class ExtractStepHandler
             return false;
         }
 
-        // Extract to finalDir if available, otherwise to same directory as source file
-        $extractTo = $variables['finalDir'] ?? dirname($sourcePath);
+        // Extract to specified directory, or finalDir if available, otherwise to same directory as source file
+        if ($extractTo === null) {
+            $extractTo = $variables['finalDir'] ?? dirname($sourcePath);
+        }
         
+        $this->dbg("Extracting to: $extractTo");
         return $extractFn($sourcePath, $extractTo);
     }
 
     /**
      * Execute extract7z step
+     * Supports: "source" or {"source": "...", "to": "..."}
      */
-    public function executeExtract7z(string $source, array $variables, string $basePath): bool
+    public function executeExtract7z(string|array $sourceConfig, array $variables, string $basePath): bool
     {
-        return $this->executeExtract($source, $variables, $basePath, '7z', [$this->fileManager, 'extract7z']);
+        return $this->executeExtract($sourceConfig, $variables, $basePath, '7z', [$this->fileManager, 'extract7z']);
     }
 
     /**
      * Execute extractZip step
+     * Supports: "source" or {"source": "...", "to": "..."}
      */
-    public function executeExtractZip(string $source, array $variables, string $basePath): bool
+    public function executeExtractZip(string|array $sourceConfig, array $variables, string $basePath): bool
     {
-        return $this->executeExtract($source, $variables, $basePath, 'ZIP', [$this->fileManager, 'extractZip']);
+        return $this->executeExtract($sourceConfig, $variables, $basePath, 'ZIP', [$this->fileManager, 'extractZip']);
     }
 }
 

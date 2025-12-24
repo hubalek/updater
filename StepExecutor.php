@@ -7,6 +7,7 @@ class StepExecutor
     private DownloadStepHandler $downloadHandler;
     private ExtractStepHandler $extractHandler;
     private MoveStepHandler $moveHandler;
+    private UtilityStepHandler $utilityHandler;
 
     public function __construct(
         FileManager $fileManager,
@@ -19,6 +20,7 @@ class StepExecutor
         $this->downloadHandler = new DownloadStepHandler($githubDownloader, $htmlPageDownloader, $httpClient);
         $this->extractHandler = new ExtractStepHandler($fileManager);
         $this->moveHandler = new MoveStepHandler($fileManager);
+        $this->utilityHandler = new UtilityStepHandler();
     }
 
     public function setDebugCallback(callable $callback): void
@@ -27,6 +29,7 @@ class StepExecutor
         $this->downloadHandler->setDebugCallback($callback);
         $this->extractHandler->setDebugCallback($callback);
         $this->moveHandler->setDebugCallback($callback);
+        $this->utilityHandler->setDebugCallback($callback);
     }
 
     /**
@@ -52,6 +55,10 @@ class StepExecutor
 
         if (isset($step['move'])) {
             return $this->moveHandler->execute($step['move'], $variables, $basePath);
+        }
+
+        if (isset($step['sleep'])) {
+            return $this->utilityHandler->executeSleep($step['sleep']);
         }
 
         $this->dbg("Unknown step type: " . json_encode($step));
