@@ -123,5 +123,81 @@ class FileManager
 
         return true;
     }
+
+    public function extract7z(string $archive, string $to): bool
+    {
+        // For 7z extraction, we'll use system command if available
+        // Otherwise fall back to similar logic as ZIP
+        $this->dbg("Extracting 7z: $archive to $to");
+
+        if (!is_dir($to)) {
+            mkdir($to, 0777, true);
+        }
+
+        // Try using 7z command if available
+        $cmd = '7z x "' . $archive . '" -o"' . $to . '" -y';
+        exec($cmd, $output, $returnCode);
+
+        if ($returnCode === 0) {
+            // Apply same flattening logic as ZIP
+            $items = array_diff(scandir($to), [".", ".."]);
+            $dirs = [];
+
+            foreach ($items as $i) {
+                if (is_dir($to . DIRECTORY_SEPARATOR . $i)) {
+                    $dirs[] = $i;
+                } else {
+                    return true;
+                }
+            }
+
+            if (count($dirs) === 1) {
+                $inner = $to . DIRECTORY_SEPARATOR . $dirs[0];
+                $innerItems = array_diff(scandir($inner), [".", ".."]);
+
+                foreach ($innerItems as $it) {
+                    $src = $inner . DIRECTORY_SEPARATOR . $it;
+                    $dst = $to . DIRECTORY_SEPARATOR . $it;
+
+                    if (!$this->retryRename($src, $dst)) {
+                        return true;
+                    }
+                }
+
+                if (is_dir($inner)) {
+                    @rmdir($inner);
+                    if (is_dir($inner)) {
+                        exec('cmd /c rmdir "' . $inner . '"');
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        $this->dbg("7z extraction failed, return code: $returnCode");
+        return false;
+    }
+
+    public function moveFileOrDir(string $from, string $to): bool
+    {
+        if (!file_exists($from)) {
+            return false;
+        }
+
+        // If destination exists and is a directory, move into it
+        if (is_dir($to)) {
+            $to = $to . DIRECTORY_SEPARATOR . basename($from);
+        } else {
+            // Create destination directory if it doesn't exist
+            $toDir = dirname($to);
+            if (!is_dir($toDir)) {
+                mkdir($toDir, 0777, true);
+            }
+        }
+
+        // Use retry rename for moving
+        return $this->retryRename($from, $to);
+    }
 }
 

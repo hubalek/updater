@@ -7,6 +7,7 @@ require_once __DIR__ . '/FileManager.php';
 require_once __DIR__ . '/JunctionManager.php';
 require_once __DIR__ . '/HttpClient.php';
 require_once __DIR__ . '/DirectoryScanner.php';
+require_once __DIR__ . '/StepExecutor.php';
 require_once __DIR__ . '/UpdateProcessor.php';
 require_once __DIR__ . '/UpdateOrchestrator.php';
 
