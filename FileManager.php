@@ -172,7 +172,20 @@ class FileManager
                 $to = $to . DIRECTORY_SEPARATOR . basename($from);
             }
             $this->dbg("Copying file: $from -> $to");
-            return @copy($from, $to);
+            
+            // Get original modification time
+            $originalMtime = @filemtime($from);
+            
+            if (!@copy($from, $to)) {
+                return false;
+            }
+            
+            // Preserve original modification time
+            if ($originalMtime !== false) {
+                @touch($to, $originalMtime);
+            }
+            
+            return true;
         }
     }
 
@@ -204,8 +217,16 @@ class FileManager
                     return false;
                 }
             } else {
+                // Get original modification time
+                $originalMtime = @filemtime($fromPath);
+                
                 if (!@copy($fromPath, $toPath)) {
                     return false;
+                }
+                
+                // Preserve original modification time
+                if ($originalMtime !== false) {
+                    @touch($toPath, $originalMtime);
                 }
             }
         }
