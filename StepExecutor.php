@@ -63,12 +63,14 @@ class StepExecutor
     {
         $sourcePath = $this->replaceVariables($source, $variables);
         
-        // If path is relative, make it relative to basePath
-        if (!preg_match('/^[A-Za-z]:\\\\|^\\\\/', $sourcePath)) {
+        // Normalize path separators first
+        $sourcePath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $sourcePath);
+        
+        // If path is not absolute (doesn't start with drive letter or UNC), make it relative to basePath
+        if (!preg_match('/^[A-Za-z]:' . preg_quote(DIRECTORY_SEPARATOR, '/') . '|^' . preg_quote(DIRECTORY_SEPARATOR, '/') . preg_quote(DIRECTORY_SEPARATOR, '/') . '/', $sourcePath)) {
             $sourcePath = $basePath . DIRECTORY_SEPARATOR . $sourcePath;
         }
 
-        $sourcePath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $sourcePath);
         $sourcePath = realpath($sourcePath) ?: $sourcePath;
 
         $this->dbg("Extracting 7z: $sourcePath");
@@ -91,12 +93,14 @@ class StepExecutor
     {
         $sourcePath = $this->replaceVariables($source, $variables);
         
-        // If path is relative, make it relative to basePath
-        if (!preg_match('/^[A-Za-z]:\\\\|^\\\\/', $sourcePath)) {
+        // Normalize path separators first
+        $sourcePath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $sourcePath);
+        
+        // If path is not absolute (doesn't start with drive letter or UNC), make it relative to basePath
+        if (!preg_match('/^[A-Za-z]:' . preg_quote(DIRECTORY_SEPARATOR, '/') . '|^' . preg_quote(DIRECTORY_SEPARATOR, '/') . preg_quote(DIRECTORY_SEPARATOR, '/') . '/', $sourcePath)) {
             $sourcePath = $basePath . DIRECTORY_SEPARATOR . $sourcePath;
         }
 
-        $sourcePath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $sourcePath);
         $sourcePath = realpath($sourcePath) ?: $sourcePath;
 
         $this->dbg("Extracting ZIP: $sourcePath");
@@ -128,16 +132,17 @@ class StepExecutor
         $fromPath = $this->replaceVariables($from, $variables);
         $toPath = $this->replaceVariables($to, $variables);
 
-        // If paths are relative, make them relative to basePath
-        if (!preg_match('/^[A-Za-z]:\\\\|^\\\\/', $fromPath)) {
-            $fromPath = $basePath . DIRECTORY_SEPARATOR . $fromPath;
-        }
-        if (!preg_match('/^[A-Za-z]:\\\\|^\\\\/', $toPath)) {
-            $toPath = $basePath . DIRECTORY_SEPARATOR . $toPath;
-        }
-
+        // Normalize path separators first
         $fromPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $fromPath);
         $toPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $toPath);
+
+        // If paths are not absolute (don't start with drive letter or UNC), make them relative to basePath
+        if (!preg_match('/^[A-Za-z]:' . preg_quote(DIRECTORY_SEPARATOR, '/') . '|^' . preg_quote(DIRECTORY_SEPARATOR, '/') . preg_quote(DIRECTORY_SEPARATOR, '/') . '/', $fromPath)) {
+            $fromPath = $basePath . DIRECTORY_SEPARATOR . $fromPath;
+        }
+        if (!preg_match('/^[A-Za-z]:' . preg_quote(DIRECTORY_SEPARATOR, '/') . '|^' . preg_quote(DIRECTORY_SEPARATOR, '/') . preg_quote(DIRECTORY_SEPARATOR, '/') . '/', $toPath)) {
+            $toPath = $basePath . DIRECTORY_SEPARATOR . $toPath;
+        }
 
         // Handle wildcards in from path
         if (strpos($fromPath, '*') !== false) {
