@@ -93,19 +93,24 @@ class UpdateProcessor
 
         if ($run) {
             $version = $this->githubParser->extractVersionName($assetUrl);
+            $this->dbg("Extracted version: $version");
             if ($this->fileManager->isVersionDownloaded($appPath, $version)) {
+                $this->dbg("Version already downloaded, skipping");
                 $run = false;
             }
         }
 
         // Check if config uses new steps-based approach
         $hasSteps = isset($cfg["steps"]) && is_array($cfg["steps"]) && !empty($cfg["steps"]);
+        $this->dbg("Has steps: " . ($hasSteps ? "yes" : "no"));
 
         if ($run) {
             if ($hasSteps) {
+                $this->dbg("Using steps-based processing");
                 // New steps-based processing
                 $run = $this->processWithSteps($cfg, $assetUrl, $version, $appPath, $appFolder, $baseName);
             } else {
+                $this->dbg("Using legacy processing");
                 // Legacy processing (backward compatibility)
                 $run = $this->processLegacy($assetUrl, $version, $appPath, $baseName);
             }
@@ -123,9 +128,12 @@ class UpdateProcessor
     {
         // Download file
         $downloadedFile = $appPath . DIRECTORY_SEPARATOR . basename($assetUrl);
+        $this->dbg("Downloading to: $downloadedFile");
         if (!$this->httpClient->downloadFile($assetUrl, $downloadedFile)) {
+            $this->dbg("Download failed");
             return false;
         }
+        $this->dbg("Download completed");
 
         // Determine final directory name
         $finalDirName = $version;
@@ -133,6 +141,7 @@ class UpdateProcessor
             $finalDirName = str_replace('{version}', $version, $cfg["finalDirPattern"]);
         }
         $finalDir = $appPath . DIRECTORY_SEPARATOR . $finalDirName;
+        $this->dbg("Final directory: $finalDir");
 
         // Prepare variables for step execution
         $variables = [
@@ -146,16 +155,21 @@ class UpdateProcessor
 
         // Execute steps in order
         $steps = $cfg["steps"];
-        foreach ($steps as $step) {
+        $this->dbg("Executing " . count($steps) . " step(s)");
+        foreach ($steps as $index => $step) {
+            $this->dbg("Executing step " . ($index + 1) . ": " . json_encode($step));
             if (!$this->stepExecutor->executeStep($step, $variables, $appPath)) {
                 $this->dbg("Step execution failed: " . json_encode($step));
                 return false;
             }
+            $this->dbg("Step " . ($index + 1) . " completed");
         }
 
         // Create junction to final directory
         $lnkPath = $appPath . DIRECTORY_SEPARATOR . $baseName;
+        $this->dbg("Creating junction: $lnkPath -> $finalDir");
         $this->junctionManager->createJunction($finalDir, $lnkPath, $baseName);
+        $this->dbg("Junction created");
 
         return true;
     }
