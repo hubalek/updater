@@ -6,7 +6,8 @@
         "pageUrl": "https://www.ghisler.com/download.htm",
         "findLink": {
           "mustContain": ["x64", ".exe"],
-          "mustNotContain": []
+          "mustNotContain": [],
+          "allowedExt": ["exe"]
         },
         "versionFrom": "exe"
       }
