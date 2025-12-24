@@ -153,8 +153,25 @@ class UtilityStepHandler
             return true; // Not an error if no previous installation exists
         }
 
-        // Resolve source path in previous installation
-        $sourcePath = $previousInstallation . DIRECTORY_SEPARATOR . $fromFile;
+        // Add $old variable for previous installation path
+        $variables['old'] = $previousInstallation;
+
+        // Resolve source path using PathResolver (supports $old/wincmd.key pattern)
+        // Replace variables first
+        $resolvedFrom = PathResolver::replaceVariables($fromFile, $variables);
+        $resolvedFrom = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $resolvedFrom);
+        
+        // If path is absolute after variable replacement, use it directly
+        // Otherwise, it's relative to previous installation
+        if (preg_match('/^[A-Za-z]:' . preg_quote(DIRECTORY_SEPARATOR, '/') . '|^' . preg_quote(DIRECTORY_SEPARATOR, '/') . preg_quote(DIRECTORY_SEPARATOR, '/') . '/', $resolvedFrom)) {
+            $sourcePath = $resolvedFrom;
+        } else {
+            $sourcePath = $previousInstallation . DIRECTORY_SEPARATOR . $resolvedFrom;
+        }
+        
+        // Normalize path
+        $sourcePath = realpath($sourcePath) ?: $sourcePath;
+        
         if (!file_exists($sourcePath)) {
             $this->dbg("Source file does not exist in previous installation: $sourcePath");
             return true; // Not an error if file doesn't exist in previous installation
