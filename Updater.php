@@ -25,10 +25,11 @@ class Updater
         $this->httpClient = new HttpClient();
 
         // Nastavení debug callbacků
-        $this->githubParser->setDebugCallback([$this, 'dbg']);
-        $this->fileManager->setDebugCallback([$this, 'dbg']);
-        $this->junctionManager->setDebugCallback([$this, 'dbg']);
-        $this->httpClient->setDebugCallback([$this, 'dbg']);
+        $debugCallback = fn(string $msg) => $this->dbg($msg);
+        $this->githubParser->setDebugCallback($debugCallback);
+        $this->fileManager->setDebugCallback($debugCallback);
+        $this->junctionManager->setDebugCallback($debugCallback);
+        $this->httpClient->setDebugCallback($debugCallback);
         $this->junctionManager->setFileManager($this->fileManager);
 
         // Inicializace procesoru aktualizací
@@ -39,7 +40,7 @@ class Updater
             $this->junctionManager,
             $this->httpClient
         );
-        $this->updateProcessor->setDebugCallback([$this, 'dbg']);
+        $this->updateProcessor->setDebugCallback($debugCallback);
     }
 
     private function dbg(string $msg): void
