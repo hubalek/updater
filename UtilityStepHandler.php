@@ -153,10 +153,10 @@ class UtilityStepHandler
             return true; // Not an error if no previous installation exists
         }
 
-        // Add $old variable for previous installation path
-        $variables['old'] = $previousInstallation;
+        // Add $oldDir variable for previous installation path
+        $variables['oldDir'] = $previousInstallation;
 
-        // Resolve source path using PathResolver (supports $old/wincmd.key pattern)
+        // Resolve source path using PathResolver (supports $oldDir/wincmd.key pattern)
         // Replace variables first
         $resolvedFrom = PathResolver::replaceVariables($fromFile, $variables);
         $resolvedFrom = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $resolvedFrom);

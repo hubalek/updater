@@ -28,7 +28,7 @@
     { "remove": "$tempDir/e" },
     {
       "copy": {
-        "from": "$old/wincmd.key",
+        "from": "$oldDir/wincmd.key",
         "to": "$tempDir/wincmd.key"
       }
     },
