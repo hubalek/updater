@@ -2,19 +2,7 @@
 
 class ZipExtractor
 {
-    private $debugCallback = null;
-
-    public function setDebugCallback(callable $callback): void
-    {
-        $this->debugCallback = $callback;
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
-    }
+    use DebugTrait;
 
     /**
      * Extract ZIP archive

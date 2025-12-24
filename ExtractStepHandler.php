@@ -2,24 +2,13 @@
 
 class ExtractStepHandler
 {
+    use DebugTrait;
+
     private FileManager $fileManager;
-    private $debugCallback = null;
 
     public function __construct(FileManager $fileManager)
     {
         $this->fileManager = $fileManager;
-    }
-
-    public function setDebugCallback(callable $callback): void
-    {
-        $this->debugCallback = $callback;
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
     }
 
     /**

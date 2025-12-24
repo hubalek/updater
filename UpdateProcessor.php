@@ -2,13 +2,14 @@
 
 class UpdateProcessor
 {
+    use DebugTrait;
+
     private ConfigLoader $configLoader;
     private GitHubParser $githubParser;
     private FileManager $fileManager;
     private JunctionManager $junctionManager;
     private HttpClient $httpClient;
     private StepExecutor $stepExecutor;
-    private $debugCallback = null;
 
     public function __construct(
         ConfigLoader $configLoader,
@@ -31,13 +32,6 @@ class UpdateProcessor
         $this->stepExecutor->setDebugCallback($callback);
         $this->httpClient->setDebugCallback($callback);
         $this->githubParser->setDebugCallback($callback);
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
     }
 
     public function processJson(string $appFolder, string $appPath, string $jsonFile): void

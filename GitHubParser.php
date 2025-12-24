@@ -2,19 +2,7 @@
 
 class GitHubParser
 {
-    private $debugCallback = null;
-
-    public function setDebugCallback(callable $callback): void
-    {
-        $this->debugCallback = $callback;
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
-    }
+    use DebugTrait;
 
     public function findAsset(array $assets, array $filter): string|null
     {

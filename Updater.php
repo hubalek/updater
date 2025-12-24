@@ -1,6 +1,7 @@
 <?php
 ini_set('memory_limit', '2048M');
 
+require_once __DIR__ . '/DebugTrait.php';
 require_once __DIR__ . '/ConfigLoader.php';
 require_once __DIR__ . '/GitHubParser.php';
 require_once __DIR__ . '/HttpClient.php';

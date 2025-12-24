@@ -2,19 +2,7 @@
 
 class HttpClient
 {
-    private $debugCallback = null;
-
-    public function setDebugCallback(callable $callback): void
-    {
-        $this->debugCallback = $callback;
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
-    }
+    use DebugTrait;
 
     public function httpGet(string $url): string|false
     {

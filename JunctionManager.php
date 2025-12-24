@@ -2,24 +2,13 @@
 
 class JunctionManager
 {
-    private $debugCallback = null;
-    private $fileManager = null;
+    use DebugTrait;
 
-    public function setDebugCallback(callable $callback): void
-    {
-        $this->debugCallback = $callback;
-    }
+    private $fileManager = null;
 
     public function setFileManager(FileManager $fileManager): void
     {
         $this->fileManager = $fileManager;
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
     }
 
     public function restoreMissingJunction(string $appPath, string $base): void

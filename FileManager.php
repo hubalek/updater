@@ -2,9 +2,10 @@
 
 class FileManager
 {
+    use DebugTrait;
+
     private ZipExtractor $zipExtractor;
     private SevenZipExtractor $sevenZipExtractor;
-    private $debugCallback = null;
 
     public function __construct()
     {
@@ -17,13 +18,6 @@ class FileManager
         $this->debugCallback = $callback;
         $this->zipExtractor->setDebugCallback($callback);
         $this->sevenZipExtractor->setDebugCallback($callback);
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
     }
 
     public function getLocalVersions(string $appPath): array

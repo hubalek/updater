@@ -2,9 +2,10 @@
 
 class DownloadStepHandler
 {
+    use DebugTrait;
+
     private GitHubDownloader $githubDownloader;
     private HttpClient $httpClient;
-    private $debugCallback = null;
 
     public function __construct(GitHubDownloader $githubDownloader, HttpClient $httpClient)
     {
@@ -16,13 +17,6 @@ class DownloadStepHandler
     {
         $this->debugCallback = $callback;
         $this->githubDownloader->setDebugCallback($callback);
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
     }
 
     /**

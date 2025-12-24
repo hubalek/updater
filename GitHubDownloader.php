@@ -2,28 +2,17 @@
 
 class GitHubDownloader
 {
+    use DebugTrait;
+
     private HttpClient $httpClient;
     private GitHubParser $githubParser;
     private ConfigLoader $configLoader;
-    private $debugCallback = null;
 
     public function __construct(HttpClient $httpClient, GitHubParser $githubParser, ConfigLoader $configLoader)
     {
         $this->httpClient = $httpClient;
         $this->githubParser = $githubParser;
         $this->configLoader = $configLoader;
-    }
-
-    public function setDebugCallback(callable $callback): void
-    {
-        $this->debugCallback = $callback;
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
     }
 
     /**

@@ -2,10 +2,11 @@
 
 class StepExecutor
 {
+    use DebugTrait;
+
     private DownloadStepHandler $downloadHandler;
     private ExtractStepHandler $extractHandler;
     private MoveStepHandler $moveHandler;
-    private $debugCallback = null;
 
     public function __construct(
         FileManager $fileManager,
@@ -25,13 +26,6 @@ class StepExecutor
         $this->downloadHandler->setDebugCallback($callback);
         $this->extractHandler->setDebugCallback($callback);
         $this->moveHandler->setDebugCallback($callback);
-    }
-
-    private function dbg(string $msg): void
-    {
-        if ($this->debugCallback !== null) {
-            ($this->debugCallback)($msg);
-        }
     }
 
     /**
