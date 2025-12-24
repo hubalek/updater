@@ -1,8 +1,6 @@
 {
   "url": "https://api.github.com/repos/brondavies/TrayToolbar/releases/latest",
   "filter": {
-    "mustContain": ["x64", "portable"],
-    "mustNotContain": ["arm"],
     "allowedExt": ["zip"]
   },
   "steps": [
