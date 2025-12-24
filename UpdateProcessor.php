@@ -94,8 +94,11 @@ class UpdateProcessor
         if ($run) {
             $version = $this->githubParser->extractVersionName($assetUrl);
             $this->dbg("Extracted version: $version");
-            if ($this->fileManager->isVersionDownloaded($appPath, $version)) {
-                $this->dbg("Version already downloaded, skipping");
+            
+            // Check if version directory exists (extracted), not just ZIP file
+            $versionDir = $appPath . DIRECTORY_SEPARATOR . $version;
+            if (is_dir($versionDir)) {
+                $this->dbg("Version directory already exists, skipping");
                 $run = false;
             }
         }
