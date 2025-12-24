@@ -2,21 +2,20 @@
 
 class DownloadStepHandler
 {
+    private GitHubDownloader $githubDownloader;
     private HttpClient $httpClient;
-    private GitHubParser $githubParser;
-    private ConfigLoader $configLoader;
     private $debugCallback = null;
 
-    public function __construct(HttpClient $httpClient, GitHubParser $githubParser, ConfigLoader $configLoader)
+    public function __construct(GitHubDownloader $githubDownloader, HttpClient $httpClient)
     {
+        $this->githubDownloader = $githubDownloader;
         $this->httpClient = $httpClient;
-        $this->githubParser = $githubParser;
-        $this->configLoader = $configLoader;
     }
 
     public function setDebugCallback(callable $callback): void
     {
         $this->debugCallback = $callback;
+        $this->githubDownloader->setDebugCallback($callback);
     }
 
     private function dbg(string $msg): void
@@ -59,37 +58,18 @@ class DownloadStepHandler
             return false;
         }
 
-        $this->dbg("Fetching GitHub API: $apiUrl");
-        $json = $this->httpClient->httpGet($apiUrl);
-        if ($json === false) {
-            $this->dbg("HTTP request failed");
-            return false;
-        }
-
-        $data = json_decode($json, true);
-        if (!is_array($data) || empty($data["assets"])) {
-            $this->dbg("API response does not contain assets");
-            return false;
-        }
-
-        // Merge filter with defaults
-        $filter = $this->configLoader->mergeFilters($downloadConfig['filter'] ?? null);
+        // Get asset info (URL and version)
+        $filter = $downloadConfig['filter'] ?? null;
+        $result = $this->githubDownloader->getAssetInfo($apiUrl, $filter);
         
-        // Find matching asset
-        $assetUrl = $this->githubParser->findAsset($data["assets"], $filter);
-        if ($assetUrl === null) {
-            $this->dbg("No matching asset found");
+        if ($result === null) {
             return false;
         }
 
-        // Extract version from asset URL
-        $version = $this->githubParser->extractVersionName($assetUrl);
-        $this->dbg("Extracted version: $version");
-
-        // Download file
-        $downloadedFile = $basePath . DIRECTORY_SEPARATOR . basename($assetUrl);
+        // Download file to specific path
+        $downloadedFile = $basePath . DIRECTORY_SEPARATOR . basename($result['url']);
         $this->dbg("Downloading to: $downloadedFile");
-        if (!$this->httpClient->downloadFile($assetUrl, $downloadedFile)) {
+        if (!$this->httpClient->downloadFile($result['url'], $downloadedFile)) {
             $this->dbg("Download failed");
             return false;
         }
@@ -97,7 +77,7 @@ class DownloadStepHandler
 
         // Set variables for subsequent steps
         $variables['downloadedFile'] = $downloadedFile;
-        $variables['version'] = $version;
+        $variables['version'] = $result['version'];
 
         return true;
     }

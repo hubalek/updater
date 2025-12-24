@@ -13,7 +13,8 @@ class StepExecutor
         GitHubParser $githubParser,
         ConfigLoader $configLoader
     ) {
-        $this->downloadHandler = new DownloadStepHandler($httpClient, $githubParser, $configLoader);
+        $githubDownloader = new GitHubDownloader($httpClient, $githubParser, $configLoader);
+        $this->downloadHandler = new DownloadStepHandler($githubDownloader, $httpClient);
         $this->extractHandler = new ExtractStepHandler($fileManager);
         $this->moveHandler = new MoveStepHandler($fileManager);
     }

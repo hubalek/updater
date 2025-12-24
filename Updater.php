@@ -3,9 +3,12 @@ ini_set('memory_limit', '2048M');
 
 require_once __DIR__ . '/ConfigLoader.php';
 require_once __DIR__ . '/GitHubParser.php';
+require_once __DIR__ . '/HttpClient.php';
+require_once __DIR__ . '/GitHubDownloader.php';
+require_once __DIR__ . '/ZipExtractor.php';
+require_once __DIR__ . '/SevenZipExtractor.php';
 require_once __DIR__ . '/FileManager.php';
 require_once __DIR__ . '/JunctionManager.php';
-require_once __DIR__ . '/HttpClient.php';
 require_once __DIR__ . '/DirectoryScanner.php';
 require_once __DIR__ . '/PathResolver.php';
 require_once __DIR__ . '/DownloadStepHandler.php';
