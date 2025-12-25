@@ -53,6 +53,10 @@ class HtmlPageDownloader
             return null;
         }
 
+        // Clean up URL - remove any escape sequences
+        $downloadUrl = str_replace('\\/', '/', $downloadUrl);
+        $downloadUrl = str_replace('\\', '', $downloadUrl);
+
         // Extract version from URL or filename
         $version = $this->extractVersion($downloadUrl, $versionFrom);
         $this->dbg("Extracted version: $version");
@@ -73,6 +77,11 @@ class HtmlPageDownloader
         // Match <a href="..."> tags
         if (preg_match_all('/<a\s+[^>]*href\s*=\s*["\']([^"\']+)["\'][^>]*>/i', $html, $matches)) {
             foreach ($matches[1] as $url) {
+                // Decode HTML entities
+                $url = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                // Remove escape sequences (like \/ which should be /)
+                $url = str_replace('\\/', '/', $url);
+                $url = str_replace('\\', '', $url);
                 // Resolve relative URLs
                 $absoluteUrl = $this->resolveUrl($url, $baseUrl);
                 if ($absoluteUrl !== null) {

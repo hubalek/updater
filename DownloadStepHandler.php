@@ -98,10 +98,14 @@ class DownloadStepHandler
             return false;
         }
 
+        // Clean up URL - remove any escape sequences
+        $cleanUrl = str_replace('\\/', '/', $result['url']);
+        $cleanUrl = str_replace('\\', '', $cleanUrl);
+        
         // Download file to specific path
-        $downloadedFile = $basePath . DIRECTORY_SEPARATOR . basename($result['url']);
+        $downloadedFile = $basePath . DIRECTORY_SEPARATOR . basename($cleanUrl);
         $this->dbg("Downloading to: $downloadedFile");
-        if (!$this->httpClient->downloadFile($result['url'], $downloadedFile)) {
+        if (!$this->httpClient->downloadFile($cleanUrl, $downloadedFile)) {
             $this->dbg("Download failed");
             return false;
         }
