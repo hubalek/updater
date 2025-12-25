@@ -38,12 +38,12 @@ Configuration files are JSON files (`.json` or `.js`) placed in application fold
   },
   "finalDirPattern": "AppName-{version}-x64",
   "steps": [
-    { "extractZip": "$downloadedFile" },
+    { "extractZip": "{downloadedFile}" },
     { "extract7z": "INSTALL.CAB" },
     {
       "move": {
         "from": "INSTALL/*",
-        "to": "$finalDir/"
+        "to": "{finalDir}/"
       }
     }
   ]
@@ -84,11 +84,11 @@ Steps are executed in order. Each step is an object with one of these keys:
 Extracts a ZIP archive.
 
 ```json
-{ "extractZip": "$downloadedFile" }
+{ "extractZip": "{downloadedFile}" }
 { "extractZip": "path/to/file.zip" }
 ```
 
-- Extracts to `$finalDir` if available, otherwise to same directory as source
+- Extracts to `{finalDir}` if available, otherwise to same directory as source
 - Automatically flattens single-directory archives
 
 ### extract7z
@@ -96,11 +96,11 @@ Extracts a ZIP archive.
 Extracts a 7z archive (requires 7z command available).
 
 ```json
-{ "extract7z": "$downloadedFile" }
+{ "extract7z": "{downloadedFile}" }
 { "extract7z": "INSTALL.CAB" }
 ```
 
-- Extracts to `$finalDir` if available, otherwise to same directory as source
+- Extracts to `{finalDir}` if available, otherwise to same directory as source
 - Automatically flattens single-directory archives
 
 ### move
@@ -111,7 +111,7 @@ Moves files or directories.
 {
   "move": {
     "from": "INSTALL/*",
-    "to": "$finalDir/"
+    "to": "{finalDir}/"
   }
 }
 ```
@@ -123,14 +123,16 @@ Moves files or directories.
 
 ## Variables
 
-Variables can be used in step configurations (with `$variable` or `{variable}` syntax):
+Variables can be used in step configurations. Use `{variable}` syntax (recommended) or `$variable` (legacy):
 
-- **`$downloadedFile`** - Full path to downloaded file
-- **`$finalDir`** - Full path to final directory (based on `finalDirPattern` or `version`)
-- **`$version`** - Extracted version name
-- **`$appPath`** - Application folder path
-- **`$appFolder`** - Application folder name
-- **`$baseName`** - Configuration file base name (without extension)
+- **`{downloadedFile}`** - Full path to downloaded file
+- **`{finalDir}`** - Full path to final directory (based on `finalDirPattern` or `version`)
+- **`{tempDir}`** - Temporary directory for intermediate extraction steps
+- **`{oldDir}`** - Path to previous installation directory (for copy step)
+- **`{version}`** - Extracted version name
+- **`{appPath}`** - Application folder path
+- **`{appFolder}`** - Application folder name
+- **`{baseName}`** - Configuration file base name (without extension)
 
 ## Examples
 
@@ -145,7 +147,7 @@ Variables can be used in step configurations (with `$variable` or `{variable}` s
     "allowedExt": ["zip"]
   },
   "steps": [
-    { "extractZip": "$downloadedFile" }
+    { "extractZip": "{downloadedFile}" }
   ]
 }
 ```
@@ -162,12 +164,12 @@ Variables can be used in step configurations (with `$variable` or `{variable}` s
   },
   "finalDirPattern": "App-{version}-x64",
   "steps": [
-    { "extract7z": "$downloadedFile" },
+    { "extract7z": "{downloadedFile}" },
     { "extract7z": "INSTALL.CAB" },
     {
       "move": {
         "from": "INSTALL/*",
-        "to": "$finalDir/"
+        "to": "{finalDir}/"
       }
     }
   ]
@@ -204,6 +206,6 @@ If `filter` is not specified, these defaults are used:
 ## Junction Creation
 
 After all steps complete successfully:
-- Junction is created from `{baseName}` to `$finalDir` (or `{version}` in legacy mode)
+- Junction is created from `{baseName}` to `{finalDir}` (or `{version}` in legacy mode)
 - Junction name is the configuration file name without extension
 

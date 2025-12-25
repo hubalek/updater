@@ -14,28 +14,28 @@
     },
     {
       "extract7z": {
-        "source": "$downloadedFile",
-        "to": "$tempDir"
+        "source": "{downloadedFile}",
+        "to": "{tempDir}"
       }
     },
     {
       "extract7z": {
         "source": "INSTALL.CAB",
-        "to": "$tempDir"
+        "to": "{tempDir}"
       }
     },
-    { "remove": "$tempDir/d" },
-    { "remove": "$tempDir/e" },
+    { "remove": "{tempDir}/d" },
+    { "remove": "{tempDir}/e" },
     {
       "copy": {
-        "from": "$oldDir/wincmd.key",
-        "to": "$tempDir/wincmd.key"
+        "from": "{oldDir}/wincmd.key",
+        "to": "{tempDir}/wincmd.key"
       }
     },
     {
       "move": {
-        "from": "$tempDir/*",
-        "to": "$finalDir/"
+        "from": "{tempDir}/*",
+        "to": "{finalDir}/"
       }
     },
     { "sleep": 1 }
