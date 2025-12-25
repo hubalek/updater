@@ -2,42 +2,24 @@
 
 ## Overview
 
-Configuration files are JSON files (`.json` or `.js`) placed in application folders. The system supports two modes:
-1. **Legacy mode** - Simple format for basic GitHub releases (backward compatible)
-2. **Steps-based mode** - Advanced format with custom processing steps
+Configuration files are JSON files (`.json` or `.js`) placed in application folders. All configurations must use the steps-based format.
 
 ## Basic Structure
 
-### Legacy Format (Backward Compatible)
-
 ```json
 {
-  "url": "https://api.github.com/repos/OWNER/REPO/releases/latest",
-  "filter": {
-    "mustContain": ["portable", "x64"],
-    "mustNotContain": ["arm"],
-    "allowedExt": ["zip", "7z"]
-  }
-}
-```
-
-**Behavior:**
-- Downloads ZIP file from GitHub release
-- Extracts to `{version}` directory
-- Creates junction from `{baseName}` to `{version}`
-
-### Steps-Based Format (New)
-
-```json
-{
-  "url": "https://api.github.com/repos/OWNER/REPO/releases/latest",
-  "filter": {
-    "mustContain": ["portable", "x64"],
-    "mustNotContain": ["arm"],
-    "allowedExt": ["zip", "7z"]
-  },
   "finalDirPattern": "AppName-{version}-x64",
   "steps": [
+    {
+      "download": {
+        "url": "https://api.github.com/repos/OWNER/REPO/releases/latest",
+        "filter": {
+          "mustContain": ["portable", "x64"],
+          "mustNotContain": ["arm"],
+          "allowedExt": ["zip", "7z"]
+        }
+      }
+    },
     { "extractZip": "{downloadedFile}" },
     { "extract7z": "INSTALL.CAB" },
     {
@@ -54,26 +36,35 @@ Configuration files are JSON files (`.json` or `.js`) placed in application fold
 
 ### Required Fields
 
-- **`url`** (string) - GitHub API URL for releases
-  - Format: `https://api.github.com/repos/OWNER/REPO/releases/latest`
-  - Or: `https://api.github.com/repos/OWNER/REPO/releases`
+- **`steps`** (array) - Processing steps (required, must be non-empty)
+  - First step must be a `download` step
+  - Subsequent steps are executed in order
 
 ### Optional Fields
 
-- **`filter`** (object) - Asset filtering rules
-  - Merges with default filter: `["portable", "x64"]` must contain, `["arm"]` must not contain, `["zip", "7z"]` allowed extensions
-  - **`mustContain`** (array of strings) - All strings must be present in asset URL
-  - **`mustNotContain`** (array of strings) - None of these strings can be in asset URL
-  - **`allowedExt`** (array of strings) - Allowed file extensions (e.g., `["zip", "7z"]`)
-
-- **`finalDirPattern`** (string) - Pattern for final directory name (only in steps-based mode)
+- **`finalDirPattern`** (string) - Pattern for final directory name
   - Use `{version}` placeholder for version number
   - Example: `"TotalCommander-{version}-x64"`
   - Default: Uses `{version}` directly if not specified
 
-- **`steps`** (array) - Processing steps (only in steps-based mode)
-  - If present and non-empty, uses steps-based processing
-  - If absent or empty, uses legacy processing
+### Download Step
+
+The first step must be a `download` step, which contains:
+
+- **`url`** (string) - GitHub API URL for releases (for GitHub downloads)
+  - Format: `https://api.github.com/repos/OWNER/REPO/releases/latest`
+  - Or: `https://api.github.com/repos/OWNER/REPO/releases`
+- **`pageUrl`** (string) - HTML page URL (for HTML page downloads)
+  - Example: `"https://www.example.com/download.htm"`
+- **`filter`** (object) - Asset filtering rules (for GitHub downloads)
+  - Merges with default filter: `["portable", "x64"]` must contain, `["arm"]` must not contain, `["zip", "7z"]` allowed extensions
+  - **`mustContain`** (array of strings) - All strings must be present in asset URL
+  - **`mustNotContain`** (array of strings) - None of these strings can be in asset URL
+  - **`allowedExt`** (array of strings) - Allowed file extensions (e.g., `["zip", "7z"]`)
+- **`findLink`** (object) - Link filtering rules (for HTML page downloads)
+  - Same structure as `filter` above
+- **`versionFrom`** (string) - How to extract version (optional, for HTML page downloads)
+  - Example: `"exe"` for special version extraction from EXE filenames
 
 ## Steps
 
@@ -123,7 +114,7 @@ Moves files or directories.
 
 ## Variables
 
-Variables can be used in step configurations. Use `{variable}` syntax (recommended) or `$variable` (legacy):
+Variables can be used in step configurations. Use `{variable}` syntax (recommended) or `$variable` (both are supported):
 
 - **`{downloadedFile}`** - Full path to downloaded file
 - **`{finalDir}`** - Full path to final directory (based on `finalDirPattern` or `version`)
@@ -140,13 +131,17 @@ Variables can be used in step configurations. Use `{variable}` syntax (recommend
 
 ```json
 {
-  "url": "https://api.github.com/repos/user/app/releases/latest",
-  "filter": {
-    "mustContain": ["portable"],
-    "mustNotContain": [],
-    "allowedExt": ["zip"]
-  },
   "steps": [
+    {
+      "download": {
+        "url": "https://api.github.com/repos/user/app/releases/latest",
+        "filter": {
+          "mustContain": ["portable"],
+          "mustNotContain": [],
+          "allowedExt": ["zip"]
+        }
+      }
+    },
     { "extractZip": "{downloadedFile}" }
   ]
 }
@@ -156,14 +151,18 @@ Variables can be used in step configurations. Use `{variable}` syntax (recommend
 
 ```json
 {
-  "url": "https://api.github.com/repos/user/app/releases/latest",
-  "filter": {
-    "mustContain": ["x64", ".exe"],
-    "mustNotContain": [],
-    "allowedExt": ["7z"]
-  },
   "finalDirPattern": "App-{version}-x64",
   "steps": [
+    {
+      "download": {
+        "url": "https://api.github.com/repos/user/app/releases/latest",
+        "filter": {
+          "mustContain": ["x64", ".exe"],
+          "mustNotContain": [],
+          "allowedExt": ["7z"]
+        }
+      }
+    },
     { "extract7z": "{downloadedFile}" },
     { "extract7z": "INSTALL.CAB" },
     {
@@ -176,16 +175,25 @@ Variables can be used in step configurations. Use `{variable}` syntax (recommend
 }
 ```
 
-### Legacy Format (Still Supported)
+### HTML Page Download
 
 ```json
 {
-  "url": "https://api.github.com/repos/user/app/releases/latest",
-  "filter": {
-    "mustContain": ["portable", "x64"],
-    "mustNotContain": ["arm"],
-    "allowedExt": ["zip"]
-  }
+  "finalDirPattern": "App-{version}-x64",
+  "steps": [
+    {
+      "download": {
+        "pageUrl": "https://www.example.com/download.htm",
+        "findLink": {
+          "mustContain": ["x64", ".exe"],
+          "mustNotContain": [],
+          "allowedExt": ["exe"]
+        },
+        "versionFrom": "exe"
+      }
+    },
+    { "extract7z": "{downloadedFile}" }
+  ]
 }
 ```
 
@@ -206,6 +214,6 @@ If `filter` is not specified, these defaults are used:
 ## Junction Creation
 
 After all steps complete successfully:
-- Junction is created from `{baseName}` to `{finalDir}` (or `{version}` in legacy mode)
+- Junction is created from `{baseName}` to `{finalDir}`
 - Junction name is the configuration file name without extension
 
