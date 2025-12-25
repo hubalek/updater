@@ -1,0 +1,18 @@
+{
+  "finalDirPattern": "{version}",
+  "steps": [
+    {
+      "download": {
+        "pageUrl": "https://www.flos-freeware.ch/notepad2.html",
+        "findLink": {
+          "mustContain": ["notepad2", "x64"],
+          "mustNotContain": ["arm"],
+          "allowedExt": ["zip"]
+        }
+      }
+    },
+    {
+      "extractZip": "{downloadedFile}"
+    }
+  ]
+}
