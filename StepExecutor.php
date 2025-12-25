@@ -13,14 +13,15 @@ class StepExecutor
         FileManager $fileManager,
         HttpClient $httpClient,
         GitHubParser $githubParser,
-        ConfigLoader $configLoader
+        ConfigLoader $configLoader,
+        InstallationScanner $installationScanner
     ) {
         $githubDownloader = new GitHubDownloader($httpClient, $githubParser, $configLoader);
         $htmlPageDownloader = new HtmlPageDownloader($httpClient, $configLoader);
         $this->downloadHandler = new DownloadStepHandler($githubDownloader, $htmlPageDownloader, $httpClient);
         $this->extractHandler = new ExtractStepHandler($fileManager);
         $this->moveHandler = new MoveStepHandler($fileManager);
-        $this->utilityHandler = new UtilityStepHandler($fileManager);
+        $this->utilityHandler = new UtilityStepHandler($fileManager, $installationScanner);
     }
 
     public function setDebugCallback(callable $callback): void

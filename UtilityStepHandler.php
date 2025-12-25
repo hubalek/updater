@@ -5,10 +5,18 @@ class UtilityStepHandler
     use DebugTrait;
 
     private FileManager $fileManager;
+    private InstallationScanner $installationScanner;
 
-    public function __construct(FileManager $fileManager)
+    public function __construct(FileManager $fileManager, InstallationScanner $installationScanner)
     {
         $this->fileManager = $fileManager;
+        $this->installationScanner = $installationScanner;
+    }
+
+    public function setDebugCallback(callable $callback): void
+    {
+        $this->debugCallback = $callback;
+        $this->installationScanner->setDebugCallback($callback);
     }
 
     /**
@@ -147,7 +155,7 @@ class UtilityStepHandler
         $baseName = $variables['baseName'] ?? '';
         $excludeDir = $variables['finalDir'] ?? '';
 
-        $previousInstallation = $this->fileManager->findPreviousInstallation($appPath, $baseName, $excludeDir);
+        $previousInstallation = $this->installationScanner->findPreviousInstallation($appPath, $baseName, $excludeDir);
         if ($previousInstallation === null) {
             $this->dbg("No previous installation found, skipping copy");
             return true; // Not an error if no previous installation exists

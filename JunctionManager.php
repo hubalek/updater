@@ -4,11 +4,11 @@ class JunctionManager
 {
     use DebugTrait;
 
-    private $fileManager = null;
+    private $installationScanner = null;
 
-    public function setFileManager(FileManager $fileManager): void
+    public function setInstallationScanner(InstallationScanner $installationScanner): void
     {
-        $this->fileManager = $fileManager;
+        $this->installationScanner = $installationScanner;
     }
 
     public function restoreMissingJunction(string $appPath, string $base): void
@@ -17,11 +17,11 @@ class JunctionManager
 
         if (is_dir($linkPath)) return;
 
-        if ($this->fileManager === null) {
+        if ($this->installationScanner === null) {
             return;
         }
 
-        $versions = $this->fileManager->getLocalVersions($appPath);
+        $versions = $this->installationScanner->getLocalVersions($appPath);
         if (empty($versions)) return;
 
         sort($versions);

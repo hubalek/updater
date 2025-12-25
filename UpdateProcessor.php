@@ -9,6 +9,7 @@ class UpdateProcessor
     private FileManager $fileManager;
     private JunctionManager $junctionManager;
     private HttpClient $httpClient;
+    private InstallationScanner $installationScanner;
     private StepExecutor $stepExecutor;
 
     public function __construct(
@@ -16,14 +17,16 @@ class UpdateProcessor
         GitHubParser $githubParser,
         FileManager $fileManager,
         JunctionManager $junctionManager,
-        HttpClient $httpClient
+        HttpClient $httpClient,
+        InstallationScanner $installationScanner
     ) {
         $this->configLoader = $configLoader;
         $this->githubParser = $githubParser;
         $this->fileManager = $fileManager;
         $this->junctionManager = $junctionManager;
         $this->httpClient = $httpClient;
-        $this->stepExecutor = new StepExecutor($fileManager, $httpClient, $githubParser, $configLoader);
+        $this->installationScanner = $installationScanner;
+        $this->stepExecutor = new StepExecutor($fileManager, $httpClient, $githubParser, $configLoader, $installationScanner);
     }
 
     public function setDebugCallback(callable $callback): void

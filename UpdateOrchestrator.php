@@ -10,6 +10,7 @@ class UpdateOrchestrator
     private FileManager $fileManager;
     private JunctionManager $junctionManager;
     private HttpClient $httpClient;
+    private InstallationScanner $installationScanner;
     private UpdateProcessor $updateProcessor;
 
     public function __construct(string $root, bool $debug = false)
@@ -23,6 +24,7 @@ class UpdateOrchestrator
         $this->fileManager = new FileManager();
         $this->junctionManager = new JunctionManager();
         $this->httpClient = new HttpClient();
+        $this->installationScanner = new InstallationScanner();
 
         // Setup debug callbacks
         $debugCallback = fn(string $msg) => $this->dbg($msg);
@@ -30,7 +32,8 @@ class UpdateOrchestrator
         $this->fileManager->setDebugCallback($debugCallback);
         $this->junctionManager->setDebugCallback($debugCallback);
         $this->httpClient->setDebugCallback($debugCallback);
-        $this->junctionManager->setFileManager($this->fileManager);
+        $this->installationScanner->setDebugCallback($debugCallback);
+        $this->junctionManager->setInstallationScanner($this->installationScanner);
 
         // Initialize update processor
         $this->updateProcessor = new UpdateProcessor(
@@ -38,7 +41,8 @@ class UpdateOrchestrator
             $this->githubParser,
             $this->fileManager,
             $this->junctionManager,
-            $this->httpClient
+            $this->httpClient,
+            $this->installationScanner
         );
         $this->updateProcessor->setDebugCallback($debugCallback);
     }

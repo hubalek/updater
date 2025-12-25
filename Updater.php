@@ -11,6 +11,7 @@ require_once __DIR__ . '/HtmlPageDownloader.php';
 require_once __DIR__ . '/ZipExtractor.php';
 require_once __DIR__ . '/SevenZipExtractor.php';
 require_once __DIR__ . '/FileManager.php';
+require_once __DIR__ . '/InstallationScanner.php';
 require_once __DIR__ . '/JunctionManager.php';
 require_once __DIR__ . '/DirectoryScanner.php';
 require_once __DIR__ . '/PathResolver.php';
