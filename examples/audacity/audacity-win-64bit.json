@@ -1,0 +1,18 @@
+{
+  "finalDirPattern": "{version}",
+  "steps": [
+    {
+      "download": {
+        "url": "https://api.github.com/repos/audacity/audacity/releases/latest",
+        "filter": {
+          "mustContain": ["win", "64bit"],
+          "mustNotContain": ["arm", "symbols"],
+          "allowedExt": ["zip"]
+        }
+      }
+    },
+    {
+      "extractZip": "{downloadedFile}"
+    }
+  ]
+}
