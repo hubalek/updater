@@ -2,7 +2,7 @@
 
 ## Overview
 
-Configuration files are JSON files (`.json` or `.js`) placed in application folders. All configurations must use the steps-based format.
+Configuration files are JSON files (`.json`) placed in application folders. All configurations must use the steps-based format.
 
 ## Basic Structure
 
@@ -47,31 +47,43 @@ Configuration files are JSON files (`.json` or `.js`) placed in application fold
   - Example: `"TotalCommander-{version}-x64"`
   - Default: Uses `{version}` directly if not specified
 
-### Download Step
+### Download Step (Required)
 
 The first step must be a `download` step, which contains:
 
-- **`url`** (string) - GitHub API URL for releases (for GitHub downloads)
+**For GitHub downloads:**
+- **`url`** (string, required) - GitHub API URL for releases
   - Format: `https://api.github.com/repos/OWNER/REPO/releases/latest`
   - Or: `https://api.github.com/repos/OWNER/REPO/releases`
-- **`pageUrl`** (string) - HTML page URL (for HTML page downloads)
-  - Example: `"https://www.example.com/download.htm"`
-- **`filter`** (object) - Asset filtering rules (for GitHub downloads)
+- **`filter`** (object, optional) - Asset filtering rules
   - Merges with default filter: `["portable", "x64"]` must contain, `["arm"]` must not contain, `["zip", "7z"]` allowed extensions
-  - **`mustContain`** (array of strings) - All strings must be present in asset URL
-  - **`mustNotContain`** (array of strings) - None of these strings can be in asset URL
-  - **`allowedExt`** (array of strings) - Allowed file extensions (e.g., `["zip", "7z"]`)
-- **`findLink`** (object) - Link filtering rules (for HTML page downloads)
+  - **`mustContain`** (array of strings, optional) - All strings must be present in asset URL
+  - **`mustNotContain`** (array of strings, optional) - None of these strings can be in asset URL
+  - **`allowedExt`** (array of strings, optional) - Allowed file extensions (e.g., `["zip", "7z"]`)
+- **`filenamePattern`** (string, optional) - Pattern for renaming downloaded file
+  - Use `{version}` placeholder for version number
+  - Example: `"app-{version}-x64"` to rename downloaded file to `app-2.20-x64.zip`
+  - File extension is automatically preserved if not included in pattern
+  - If not specified, original filename from URL is used
+
+**For HTML page downloads:**
+- **`pageUrl`** (string, required) - HTML page URL
+  - Example: `"https://www.example.com/download.htm"`
+- **`findLink`** (object, optional) - Link filtering rules
   - Same structure as `filter` above
-- **`versionFrom`** (string) - How to extract version (optional, for HTML page downloads)
+  - Merges with default filter: `["portable", "x64"]` must contain, `["arm"]` must not contain, `["zip", "7z"]` allowed extensions
+  - **`mustContain`** (array of strings, optional) - All strings must be present in link URL
+  - **`mustNotContain`** (array of strings, optional) - None of these strings can be in link URL
+  - **`allowedExt`** (array of strings, optional) - Allowed file extensions (e.g., `["zip", "7z"]`)
+- **`versionFrom`** (string, optional) - How to extract version from filename
   - Example: `"exe"` for special version extraction from EXE filenames
-- **`versionPattern`** (string) - Regex pattern to extract version from HTML page text (optional, for HTML page downloads)
+- **`versionPattern`** (string, optional) - Regex pattern to extract version from HTML page text
   - Must contain a capture group `()` for the version number
   - Delimiter is added automatically if not present (default: `/pattern/i`)
   - Example: `"v(\\d+\\.\\d+)"` to match "v2.20" and extract "2.20"
   - Example: `"Version\\s+(\\d+\\.\\d+)"` to match "Version 1.25" and extract "1.25"
   - If pattern matches, extracted version is used; otherwise falls back to filename-based extraction
-- **`filenamePattern`** (string) - Pattern for renaming downloaded file (optional)
+- **`filenamePattern`** (string, optional) - Pattern for renaming downloaded file
   - Use `{version}` placeholder for version number
   - Example: `"app-{version}-x64"` to rename downloaded file to `app-2.20-x64.zip`
   - File extension is automatically preserved if not included in pattern
@@ -118,10 +130,58 @@ Moves files or directories.
 }
 ```
 
-- **`from`** (string) - Source path (supports wildcards `*`)
-- **`to`** (string) - Destination path
+- **`from`** (string, required) - Source path (supports wildcards `*`)
+- **`to`** (string, required) - Destination path
 - If `to` ends with `/`, treats as directory and moves files into it
 - Supports wildcards in `from` path
+
+### sleep
+
+Pauses execution for specified number of seconds.
+
+```json
+{ "sleep": 5 }
+{ "sleep": { "seconds": 10 } }
+```
+
+- **`sleep`** (integer or object, required) - Sleep duration in seconds
+  - Can be a number: `5` for 5 seconds
+  - Or an object: `{ "seconds": 10 }` for 10 seconds
+
+### remove
+
+Removes files or directories.
+
+```json
+{ "remove": "temp/*.tmp" }
+{ "remove": { "path": "old-dir" } }
+```
+
+- **`remove`** (string or object, required) - Path to remove (supports wildcards `*`)
+  - Can be a string: `"temp/*.tmp"`
+  - Or an object: `{ "path": "old-dir" }`
+- Supports wildcards in path
+- Returns success even if target doesn't exist
+
+### copy
+
+Copies files from previous installation directory.
+
+```json
+{
+  "copy": {
+    "from": "config.ini",
+    "to": "{tempDir}/"
+  }
+}
+```
+
+- **`from`** (string, required) - Source file path in previous installation
+  - Supports variables like `{oldDir}/config.ini`
+- **`to`** (string, optional) - Destination path
+  - Defaults to `{tempDir}/` if not specified
+- Automatically finds previous installation directory
+- Returns success if no previous installation exists
 
 ## Variables
 
