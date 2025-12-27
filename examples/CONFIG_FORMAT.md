@@ -49,9 +49,9 @@ Configuration files are JSON files (`.json`) placed in application folders. All 
 
 ### Download Step (Required)
 
-The first step must be a `download` step, which contains:
+The first step must be a `download` step. It supports three types of downloads:
 
-**For GitHub downloads:**
+**1. GitHub downloads:**
 - **`url`** (string, required) - GitHub API URL for releases
   - Format: `https://api.github.com/repos/OWNER/REPO/releases/latest`
   - Or: `https://api.github.com/repos/OWNER/REPO/releases`
@@ -66,7 +66,7 @@ The first step must be a `download` step, which contains:
   - File extension is automatically preserved if not included in pattern
   - If not specified, original filename from URL is used
 
-**For HTML page downloads:**
+**2. HTML page downloads:**
 - **`pageUrl`** (string, required) - HTML page URL
   - Example: `"https://www.example.com/download.htm"`
 - **`findLink`** (object, optional) - Link filtering rules
@@ -88,6 +88,20 @@ The first step must be a `download` step, which contains:
   - Example: `"app-{version}-x64"` to rename downloaded file to `app-2.20-x64.zip`
   - File extension is automatically preserved if not included in pattern
   - If not specified, original filename from URL is used
+
+**3. Redirect URL downloads (e.g., VS Code):**
+- **`redirectUrl`** (string, required) - URL that returns a redirect to the final download URL
+  - Example: `"https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-archive"`
+  - The system will follow the redirect and extract the final URL from the `Location` header
+- **`versionPattern`** (string, optional) - Regex pattern to extract version from filename
+  - Must contain a capture group `()` for the version number
+  - Delimiter is added automatically if not present (default: `/pattern/i`)
+  - Example: `"VSCode-win32-x64-(\\d+\\.\\d+\\.\\d+)"` to extract version from `VSCode-win32-x64-1.107.1.zip`
+  - Default: Automatically extracts version pattern like `1.107.1` or `1.85.0` from filename
+  - If pattern doesn't match, uses filename without extension as version
+- **`filenamePattern`** (string, optional) - Pattern for renaming downloaded file
+  - Use `{version}` placeholder for version number
+  - If not specified, original filename from redirect URL is used (recommended for VS Code)
 
 ## Steps
 
@@ -319,11 +333,36 @@ Rename downloaded file to include version:
 
 This will download `app-x64.zip` and rename it to `app-2.20-x64.zip` (if version is 2.20).
 
+### Redirect URL Download
+
+Download from a URL that redirects to the final download URL (e.g., VS Code):
+
+```json
+{
+  "finalDirPattern": "VSCode-win32-x64-{version}",
+  "steps": [
+    {
+      "download": {
+        "redirectUrl": "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-archive"
+      }
+    },
+    { "extractZip": "{downloadedFile}" }
+  ]
+}
+```
+
+This will:
+1. Request the redirect URL and extract the final URL from the `Location` header
+2. Automatically extract version from filename (e.g., `1.107.1` from `VSCode-win32-x64-1.107.1.zip`)
+3. Download the file with its original filename (`VSCode-win32-x64-1.107.1.zip`)
+4. Create directory `VSCode-win32-x64-1.107.1` (if `finalDirPattern` is set)
+
 The `versionPattern` uses regex with a capture group. Delimiter is added automatically, so you don't need to include it. For example:
 - `"v(\\d+\\.\\d+)"` matches "v2.20" and extracts "2.20"
 - `"Version\\s+(\\d+\\.\\d+)"` matches "Version 1.25" and extracts "1.25"
 - `"v(\\d+\\.\\d+\\.\\d+)"` matches "v2.1.3" and extracts "2.1.3"
 - `"Current Version:\\s*([\\d\\.]+)"` matches "Current Version: 3.14" and extracts "3.14"
+- `"VSCode-win32-x64-(\\d+\\.\\d+\\.\\d+)"` matches "VSCode-win32-x64-1.107.1.zip" and extracts "1.107.1"
 
 ## Default Filter Values
 

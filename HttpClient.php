@@ -93,5 +93,52 @@ class HttpClient
         $this->dbg("Download successful: HTTP $httpCode");
         return true;
     }
+
+    /**
+     * Get redirect URL from Location header
+     * @param string $url URL that returns a redirect
+     * @return string|false Final URL from Location header, or false on failure
+     */
+    public function getRedirectUrl(string $url): string|false
+    {
+        $this->dbg("Getting redirect URL from: $url");
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_FOLLOWLOCATION => false,   // Stop at first redirect
+            CURLOPT_HEADER => true,
+            CURLOPT_NOBODY => true,             // No body, headers only
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_USERAGENT => 'curl',
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false) {
+            $this->dbg("Failed to get redirect URL: HTTP $httpCode - $error");
+            return false;
+        }
+
+        if ($httpCode >= 400) {
+            $this->dbg("Failed to get redirect URL: HTTP $httpCode");
+            return false;
+        }
+
+        // Extract Location header
+        if (preg_match('/^Location:\s*(.+)$/im', $response, $matches)) {
+            $location = trim($matches[1]);
+            $this->dbg("Redirect URL found: $location");
+            return $location;
+        }
+
+        $this->dbg("No Location header found in response");
+        return false;
+    }
 }
 

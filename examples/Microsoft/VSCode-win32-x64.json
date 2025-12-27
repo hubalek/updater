@@ -1,0 +1,14 @@
+{
+  "finalDirPattern": "VSCode-win32-x64-{version}",
+  "steps": [
+    {
+      "download": {
+        "redirectUrl": "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-archive"
+      }
+    },
+    {
+      "extractZip": "{downloadedFile}"
+    }
+  ]
+}
+
