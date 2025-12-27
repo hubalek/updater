@@ -9,7 +9,8 @@
           "mustNotContain": [],
           "allowedExt": ["zip"]
         },
-        "versionPattern": "v(\\d+\\.\\d+)"
+        "versionPattern": "v(\\d+\\.\\d+)",
+        "filenamePattern": "volumouse-{version}-x64"
       }
     },
     {

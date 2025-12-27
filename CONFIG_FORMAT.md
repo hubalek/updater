@@ -71,6 +71,11 @@ The first step must be a `download` step, which contains:
   - Example: `"v(\\d+\\.\\d+)"` to match "v2.20" and extract "2.20"
   - Example: `"Version\\s+(\\d+\\.\\d+)"` to match "Version 1.25" and extract "1.25"
   - If pattern matches, extracted version is used; otherwise falls back to filename-based extraction
+- **`filenamePattern`** (string) - Pattern for renaming downloaded file (optional)
+  - Use `{version}` placeholder for version number
+  - Example: `"app-{version}-x64"` to rename downloaded file to `app-2.20-x64.zip`
+  - File extension is automatically preserved if not included in pattern
+  - If not specified, original filename from URL is used
 
 ## Steps
 
@@ -226,6 +231,33 @@ When version is not in the filename, extract it from the HTML page text:
   ]
 }
 ```
+
+### HTML Page Download with Filename Pattern
+
+Rename downloaded file to include version:
+
+```json
+{
+  "finalDirPattern": "App-{version}-x64",
+  "steps": [
+    {
+      "download": {
+        "pageUrl": "https://www.example.com/download.htm",
+        "findLink": {
+          "mustContain": ["app", "x64"],
+          "mustNotContain": [],
+          "allowedExt": ["zip"]
+        },
+        "versionPattern": "v(\\d+\\.\\d+)",
+        "filenamePattern": "app-{version}-x64"
+      }
+    },
+    { "extractZip": "{downloadedFile}" }
+  ]
+}
+```
+
+This will download `app-x64.zip` and rename it to `app-2.20-x64.zip` (if version is 2.20).
 
 The `versionPattern` uses regex with a capture group. Delimiter is added automatically, so you don't need to include it. For example:
 - `"v(\\d+\\.\\d+)"` matches "v2.20" and extracts "2.20"
