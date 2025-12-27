@@ -53,6 +53,14 @@ class UpdateProcessor
             return;
         }
 
+        $this->dbg("Loaded config from: $configPath");
+        $this->dbg("Config keys: " . implode(', ', array_keys($cfg)));
+        if (isset($cfg["finalDirPattern"])) {
+            $this->dbg("Config finalDirPattern: " . $cfg["finalDirPattern"]);
+        } else {
+            $this->dbg("Config does NOT contain finalDirPattern");
+        }
+
         // Steps are now required
         if (!isset($cfg["steps"]) || !is_array($cfg["steps"]) || empty($cfg["steps"])) {
             $this->dbg("Config missing 'steps' array");
@@ -92,7 +100,11 @@ class UpdateProcessor
         // Check if version directory already exists
         $finalDirName = $version;
         if (isset($cfg["finalDirPattern"])) {
+            $this->dbg("Using finalDirPattern: " . $cfg["finalDirPattern"]);
             $finalDirName = str_replace('{version}', $version, $cfg["finalDirPattern"]);
+            $this->dbg("Final directory name after replacement: $finalDirName");
+        } else {
+            $this->dbg("No finalDirPattern found in config, using version as directory name");
         }
         $finalDir = $appPath . DIRECTORY_SEPARATOR . $finalDirName;
         

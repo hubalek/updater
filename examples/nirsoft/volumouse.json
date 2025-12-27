@@ -1,0 +1,20 @@
+{
+  "finalDirPattern": "volumouse-{version}-x64",
+  "steps": [
+    {
+      "download": {
+        "pageUrl": "https://www.nirsoft.net/utils/volumouse.html",
+        "findLink": {
+          "mustContain": ["volumouse", "x64"],
+          "mustNotContain": [],
+          "allowedExt": ["zip"]
+        },
+        "versionPattern": "v(\\d+\\.\\d+)"
+      }
+    },
+    {
+      "extractZip": "{downloadedFile}"
+    }
+  ]
+}
+

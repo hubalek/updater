@@ -57,7 +57,8 @@ class DownloadStepHandler
         // Get download info (URL and version)
         $findLink = $downloadConfig['findLink'] ?? null;
         $versionFrom = $downloadConfig['versionFrom'] ?? null;
-        $result = $this->htmlPageDownloader->getDownloadInfo($pageUrl, $findLink, $versionFrom);
+        $versionPattern = $downloadConfig['versionPattern'] ?? null;
+        $result = $this->htmlPageDownloader->getDownloadInfo($pageUrl, $findLink, $versionFrom, $versionPattern);
         
         if ($result === null) {
             return false;

@@ -65,6 +65,12 @@ The first step must be a `download` step, which contains:
   - Same structure as `filter` above
 - **`versionFrom`** (string) - How to extract version (optional, for HTML page downloads)
   - Example: `"exe"` for special version extraction from EXE filenames
+- **`versionPattern`** (string) - Regex pattern to extract version from HTML page text (optional, for HTML page downloads)
+  - Must contain a capture group `()` for the version number
+  - Delimiter is added automatically if not present (default: `/pattern/i`)
+  - Example: `"v(\\d+\\.\\d+)"` to match "v2.20" and extract "2.20"
+  - Example: `"Version\\s+(\\d+\\.\\d+)"` to match "Version 1.25" and extract "1.25"
+  - If pattern matches, extracted version is used; otherwise falls back to filename-based extraction
 
 ## Steps
 
@@ -196,6 +202,36 @@ Variables can be used in step configurations. Use `{variable}` syntax (recommend
   ]
 }
 ```
+
+### HTML Page Download with Version Pattern
+
+When version is not in the filename, extract it from the HTML page text:
+
+```json
+{
+  "finalDirPattern": "App-{version}",
+  "steps": [
+    {
+      "download": {
+        "pageUrl": "https://www.example.com/download.htm",
+        "findLink": {
+          "mustContain": ["app", "x64"],
+          "mustNotContain": [],
+          "allowedExt": ["zip"]
+        },
+        "versionPattern": "Version\\s+(\\d+\\.\\d+)"
+      }
+    },
+    { "extractZip": "{downloadedFile}" }
+  ]
+}
+```
+
+The `versionPattern` uses regex with a capture group. Delimiter is added automatically, so you don't need to include it. For example:
+- `"v(\\d+\\.\\d+)"` matches "v2.20" and extracts "2.20"
+- `"Version\\s+(\\d+\\.\\d+)"` matches "Version 1.25" and extracts "1.25"
+- `"v(\\d+\\.\\d+\\.\\d+)"` matches "v2.1.3" and extracts "2.1.3"
+- `"Current Version:\\s*([\\d\\.]+)"` matches "Current Version: 3.14" and extracts "3.14"
 
 ## Default Filter Values
 

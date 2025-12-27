@@ -26,9 +26,10 @@ class HtmlPageDownloader
      * @param string $pageUrl URL of the HTML page
      * @param array|null $findLink Filter configuration for finding links
      * @param string|null $versionFrom How to extract version (e.g., "exe")
+     * @param string|null $versionPattern Regex pattern to extract version from HTML text (must contain capture group)
      * @return array|null Returns ['url' => downloadUrl, 'version' => version] on success, null on failure
      */
-    public function getDownloadInfo(string $pageUrl, ?array $findLink, ?string $versionFrom): ?array
+    public function getDownloadInfo(string $pageUrl, ?array $findLink, ?string $versionFrom, ?string $versionPattern = null): ?array
     {
         $this->dbg("Fetching HTML page: $pageUrl");
         $html = $this->httpClient->httpGet($pageUrl);
@@ -57,8 +58,8 @@ class HtmlPageDownloader
         $downloadUrl = str_replace('\\/', '/', $downloadUrl);
         $downloadUrl = str_replace('\\', '', $downloadUrl);
 
-        // Extract version from URL or filename
-        $version = $this->extractVersion($downloadUrl, $versionFrom);
+        // Extract version from HTML text, URL or filename
+        $version = $this->extractVersion($downloadUrl, $versionFrom, $html, $versionPattern);
         $this->dbg("Extracted version: $version");
 
         return [
@@ -125,12 +126,42 @@ class HtmlPageDownloader
 
 
     /**
-     * Extract version from URL or filename
+     * Extract version from HTML text, URL or filename
      * @param string $url Download URL
      * @param string|null $versionFrom How to extract version (e.g., "exe" means extract from EXE filename)
+     * @param string|null $html HTML content of the page (for versionPattern extraction)
+     * @param string|null $versionPattern Regex pattern to extract version from HTML text (must contain capture group)
      */
-    private function extractVersion(string $url, ?string $versionFrom): string
+    private function extractVersion(string $url, ?string $versionFrom, ?string $html = null, ?string $versionPattern = null): string
     {
+        // First, try to extract from HTML text using pattern if provided
+        if ($versionPattern !== null && $html !== null) {
+            $this->dbg("Trying to extract version from HTML using pattern: $versionPattern");
+            // Remove HTML tags for cleaner text matching
+            $text = strip_tags($html);
+            
+            // Add delimiter if pattern doesn't already have one
+            // Common regex delimiters: / # ~ ` ! @ % & * + = | : ; , - [ ] { } ( ) ?
+            $pattern = $versionPattern;
+            $firstChar = substr($pattern, 0, 1);
+            $commonDelimiters = ['/', '#', '~', '`', '!', '@', '%', '&', '*', '+', '=', '|', ':', ';', ',', '-', '[', ']', '{', '}', '(', ')', '?'];
+            if (!in_array($firstChar, $commonDelimiters, true)) {
+                // Pattern doesn't start with a delimiter, add one
+                $pattern = '/' . $pattern . '/i';
+            }
+            
+            // Try to match pattern
+            if (preg_match($pattern, $text, $matches)) {
+                // Use first capture group (index 1) if available, otherwise full match
+                $extractedVersion = isset($matches[1]) ? $matches[1] : $matches[0];
+                $this->dbg("Extracted version from HTML: $extractedVersion");
+                return trim($extractedVersion);
+            } else {
+                $this->dbg("Pattern did not match HTML text");
+            }
+        }
+
+        // Fallback to filename-based extraction
         $filename = basename(parse_url($url, PHP_URL_PATH) ?: $url);
         
         if ($versionFrom === "exe") {
